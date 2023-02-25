@@ -3,15 +3,15 @@ import librosa
 from copy import copy
 
 class SampleCollection:
-    def __init__(self):
-        self.onset = 0 # Position of this sample's onset in the approximated piece
+    def __init__(self, onset:int = 0):
+        self.onset = onset # Position of this sample's onset in the approximated piece
         self.samples = [] # List of samples in the collection
         self.stft = None # STFT of the mixed-down samples
         self.recalc_fitness = True # If modified, this must be true until fitness is recalculated
         self.fitness = np.inf
     
     def __str__(self):
-        s = ", ".join(str(x) for x in self.samples)
+        s = f"Onset: {self.onset} | " + ", ".join(str(x) for x in self.samples) + f" | Fitness: {self.fitness}"
         return s
 
     def calc_stft(self):
@@ -34,14 +34,15 @@ class SampleCollection:
         else:
             instance.stft = None
         instance.recalc_fitness = obj.recalc_fitness
+        instance.fitness = obj.fitness
+        instance.onset = obj.onset
         return instance
 
 class BaseIndividual:
     def __init__(self, onset_locations = set()):
         self.onset_locations = onset_locations # Set of integer indices of the onset locations that are approximated
-        self.sample_collections = {onset: SampleCollection() for onset in onset_locations} # Dict of int:SampleCollection, keys should equal onset_locations 
+        self.sample_collections = {onset: SampleCollection(onset) for onset in onset_locations} # Dict of int:SampleCollection, keys should equal onset_locations 
         self.fitness = np.inf
-        self.fitness_by_onset = {onset: np.inf for onset in onset_locations}
     
     def __str__(self):
         s = "[" + "], [".join(str(self.sample_collections[x]) for x in self.sample_collections) + "| Fitness: " + str(self.fitness) +"]"
@@ -53,5 +54,4 @@ class BaseIndividual:
         instance.onset_locations = obj.onset_locations
         instance.sample_collections = {onset: SampleCollection.from_copy(obj.sample_collections[onset]) for onset in obj.onset_locations}
         instance.fitness = obj.fitness
-        instance.fitness_by_onset = {onset: obj.fitness_by_onset[onset] for onset in obj.onset_locations}
         return instance

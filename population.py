@@ -1,4 +1,4 @@
-from individual import BaseIndividual
+from individual import BaseIndividual, SampleCollection
 import numpy as np
 import bisect
 
@@ -12,9 +12,9 @@ class Population:
 
     def calc_best_fitnesses(self):
         for individual in self.individuals:
-            for onset in individual.onset_locations:
-                if self.best_collections_per_onset.get(onset, np.inf) > individual.fitness_by_onset[onset]:
-                    self.best_collections_per_onset[onset] = individual.fitness_by_onset[onset]
+            for collection in individual.sample_collections.values():
+                if collection.fitness < self.best_collections_per_onset.get(collection.onset, SampleCollection()).fitness:
+                    self.best_collections_per_onset[collection.onset] = collection
 
     def sort_individuals_by_fitness(self):
         self.individuals.sort(key=lambda item: item.fitness)
