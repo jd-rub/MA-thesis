@@ -33,6 +33,7 @@ def multi_onset_fitness_cached(target:Target, individual:BaseIndividual):
             target_stft = target.abs_stft_per_snippet[onset]
             individual.fitness_by_onset[onset] = fitness_cached(collection, target_stft)
             collection.recalc_fitness = False
+            collection.stft = None # Memory optimization
     return np.mean(list(individual.fitness_by_onset.values()))
 
 def multi_onset_fitness(y:np.ndarray, individual:BaseIndividual, onsets:np.ndarray) -> np.ndarray:

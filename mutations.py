@@ -10,8 +10,13 @@ L_BOUND = 1
 U_BOUND = 10
 
 class Mutator:
-    def __init__(self, sample_library:SampleLibrary):
+    def __init__(self, sample_library:SampleLibrary, alpha=ALPHA, beta=BETA, l_bound=L_BOUND, u_bound=U_BOUND, sample_number_increase_p:list[float]=SAMPLE_NUMBER_INCREASE_P):
         self.sample_library = sample_library
+        self.alpha = alpha
+        self.beta = beta
+        self.l_bound = l_bound
+        self.u_bound = u_bound
+        self.sample_number_increase_p = sample_number_increase_p
 
     def mutate_sample_collection(self, sample_collection:SampleCollection) -> SampleCollection:
         # Decide which mutation to apply
@@ -25,7 +30,7 @@ class Mutator:
 
     def mutate_individual(self, individual:BaseIndividual) -> BaseIndividual:
         # Draw number of mutation
-        n_mutations = int(np.clip(np.floor(np.random.normal(loc=0, scale=1) * ALPHA + BETA), a_min=L_BOUND, a_max=U_BOUND))
+        n_mutations = int(np.clip(np.floor(np.random.normal(loc=0, scale=1) * self.alpha + self.beta), a_min=self.l_bound, a_max=self.u_bound))
 
         for _ in range(n_mutations):
             # Pick a random sample collection
@@ -37,7 +42,7 @@ class Mutator:
 
     def mutate_n_samples(self, sample_collection:SampleCollection) -> SampleCollection:
         pre_mutation_n_samples = len(sample_collection.samples)
-        increase_probability = SAMPLE_NUMBER_INCREASE_P[pre_mutation_n_samples - 1]
+        increase_probability = self.sample_number_increase_p[pre_mutation_n_samples - 1]
         # Increase or decrease number of samples
         rnd = np.random.random()
         if rnd < increase_probability:

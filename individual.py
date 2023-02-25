@@ -4,9 +4,11 @@ from copy import copy
 
 class SampleCollection:
     def __init__(self):
+        self.onset = 0 # Position of this sample's onset in the approximated piece
         self.samples = [] # List of samples in the collection
         self.stft = None # STFT of the mixed-down samples
         self.recalc_fitness = True # If modified, this must be true until fitness is recalculated
+        self.fitness = np.inf
     
     def __str__(self):
         s = ", ".join(str(x) for x in self.samples)
@@ -42,8 +44,9 @@ class BaseIndividual:
         self.fitness_by_onset = {onset: np.inf for onset in onset_locations}
     
     def __str__(self):
-        s = "[" + "], [".join(str(self.sample_collections[x]) for x in self.sample_collections) + "]"
+        s = "[" + "], [".join(str(self.sample_collections[x]) for x in self.sample_collections) + "| Fitness: " + str(self.fitness) +"]"
         return s
+    
     @classmethod
     def from_copy(cls, obj):
         instance = cls()

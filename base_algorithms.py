@@ -1,11 +1,13 @@
 from sample_library import SampleLibrary
 from individual import BaseIndividual, SampleCollection
 from mutations import Mutator
-from fitness import fitness, multi_onset_fitness, multi_onset_fitness_cached
+from fitness import fitness, multi_onset_fitness_cached
+from population import Population
 from target import Target
 from typing import Union
 import numpy as np
 from tqdm import tqdm
+import bisect
 
 MAX_SAMPLES_PER_ONSET = 5
 STOPPING_FITNESS = 0.001
@@ -71,3 +73,61 @@ def create_multi_onset_individual(onsets:np.ndarray, onset_frac:float, sample_li
             random_sample = sample_lib.get_random_sample_uniform()
             collection.samples.append(random_sample)
     return individual
+
+def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_lib:SampleLibrary, popsize:int, n_offspring:int, onset_frac:float) -> Population:
+    """Evolutionary approximation of a polyphonic musical piece
+
+    Parameters
+    ----------
+    target_y : Union[np.ndarray, list]
+        signal of the target musical piece, as imported by librosa
+    max_steps : int
+        Maximum number of iterations (generations) before termination
+    sample_lib : SampleLibrary
+        Library of samples which define the algorithm's search space
+    popsize : int
+        Size of the population (µ)
+    n_offspring : int
+        Number of offspring (λ) per generation 
+    onset_frac : float
+        Fraction of approximated onsets (φ) per individual
+
+    Returns
+    -------
+    Population
+        The full population of individual approximations after max_steps of iterations
+    """
+    # Initialization
+    mutator = Mutator(sample_lib) # Applies mutations and handles stft updates
+    target = Target(target_y)
+
+    # Create initial population
+    population = Population()
+    population.individuals = [create_multi_onset_individual(target.onsets, onset_frac, sample_lib) for _ in tqdm(range(popsize), desc="Initializing Population")]
+    for individual in tqdm(population.individuals, desc="Calculating initial fitness"):
+        # Calc initial fitness
+        individual.fitness = multi_onset_fitness_cached(target, individual)
+    population.calc_best_fitnesses() # Initial record of best approximations of each onset
+    population.sort_individuals_by_fitness() # Sort population for easier management
+
+    # Evolutionary Loop
+    for step in (pbar := tqdm(range(max_steps))):
+        # Create lambda offspring
+        parents = np.random.choice(population.individuals, size=n_offspring)
+        offspring = [mutator.mutate_individual(BaseIndividual.from_copy(individual)) for individual in parents]
+        
+        # Evaluate fitness of offspring
+        for individual in offspring:
+            individual.fitness = multi_onset_fitness_cached(target, individual)
+            # Insert individual into population
+            population.insert_individual(individual)
+        
+        # Remove lambda worst individuals
+        population.remove_worst(n_offspring)
+
+        # Update progress bar
+        pbar.set_postfix_str('\t' * 100 + f"Best individual: {str(population.get_best_individual())}")
+
+
+    # Return final population
+    return population
