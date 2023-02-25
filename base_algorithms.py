@@ -45,7 +45,7 @@ def base_algorithm_1plus1_multi_offset(target_y:Union[np.ndarray, list], max_ste
     
     target = Target(target_y)
 
-    best_individual = create_multi_onset_individual(target.onsets, onset_frac, sample_lib)
+    best_individual = BaseIndividual.create_multi_onset_individual(target.onsets, onset_frac, sample_lib)
     #best_individual.fitness = multi_onset_fitness(target_y, best_individual, onsets)
     best_individual.fitness = multi_onset_fitness_cached(target=target, individual=best_individual)
 
@@ -62,17 +62,6 @@ def base_algorithm_1plus1_multi_offset(target_y:Union[np.ndarray, list], max_ste
             break
     
     return best_individual
-
-def create_multi_onset_individual(onsets:np.ndarray, onset_frac:float, sample_lib:SampleLibrary):
-    onset_subset_idx = np.random.choice(a=len(onsets), size=int(np.ceil(len(onsets)*onset_frac)), replace=False)
-    onset_subset = onsets[onset_subset_idx]
-    individual = BaseIndividual(onset_subset)
-    for onset in onset_subset:
-        collection = individual.sample_collections[onset]
-        for _ in range(np.random.choice(list(range(MAX_SAMPLES_PER_ONSET)), p=[0.1, 0.3, 0.3, 0.2, 0.1]) + 1):
-            random_sample = sample_lib.get_random_sample_uniform()
-            collection.samples.append(random_sample)
-    return individual
 
 def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_lib:SampleLibrary, popsize:int, n_offspring:int, onset_frac:float) -> Population:
     """Evolutionary approximation of a polyphonic musical piece
@@ -103,7 +92,7 @@ def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_li
 
     # Create initial population
     population = Population()
-    population.individuals = [create_multi_onset_individual(target.onsets, onset_frac, sample_lib) for _ in tqdm(range(popsize), desc="Initializing Population")]
+    population.individuals = [BaseIndividual.create_multi_onset_individual(target.onsets, onset_frac, sample_lib) for _ in tqdm(range(popsize), desc="Initializing Population")]
     for individual in tqdm(population.individuals, desc="Calculating initial fitness"):
         # Calc initial fitness
         individual.fitness = multi_onset_fitness_cached(target, individual)

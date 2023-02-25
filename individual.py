@@ -1,5 +1,6 @@
 import numpy as np
 import librosa
+from sample_library import SampleLibrary
 from copy import copy
 
 class SampleCollection:
@@ -45,7 +46,7 @@ class BaseIndividual:
         self.fitness = np.inf
     
     def __str__(self):
-        s = "[" + "], [".join(str(self.sample_collections[x]) for x in self.sample_collections) + "| Fitness: " + str(self.fitness) +"]"
+        s = "[" + "], [".join(str(self.sample_collections[x]) for x in self.sample_collections) + "], Fitness: " + str(self.fitness) +"]"
         return s
     
     @classmethod
@@ -55,3 +56,15 @@ class BaseIndividual:
         instance.sample_collections = {onset: SampleCollection.from_copy(obj.sample_collections[onset]) for onset in obj.onset_locations}
         instance.fitness = obj.fitness
         return instance
+    
+    @classmethod
+    def create_multi_onset_individual(cls, onsets:np.ndarray, onset_frac:float, sample_lib:SampleLibrary, max_samples_per_onset:int = 5):
+        onset_subset_idx = np.random.choice(a=len(onsets), size=int(np.ceil(len(onsets)*onset_frac)), replace=False)
+        onset_subset = onsets[onset_subset_idx]
+        individual = cls(onset_subset)
+        for onset in onset_subset:
+            collection = individual.sample_collections[onset]
+            for _ in range(np.random.choice(list(range(max_samples_per_onset)), p=[0.1, 0.3, 0.3, 0.2, 0.1]) + 1):
+                random_sample = sample_lib.get_random_sample_uniform()
+                collection.samples.append(random_sample)
+        return individual
