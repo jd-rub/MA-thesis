@@ -1,6 +1,7 @@
 import librosa
 from glob import glob
 from tqdm import tqdm
+from tqdm.contrib.concurrent import process_map
 import threading
 import numpy as np
 from base_sample import BaseSample
@@ -8,9 +9,9 @@ from instrument_info import InstrumentInfo
 
 # TODO: Set instruments, styles, and pitches in enum-style
 class SampleLibrary:
-    def __init__(self, path='./audio/EvoMix-NormalizedSamples/Normalized/Archive/SingleInstrumentSamples/'):
+    def __init__(self, path='./audio/StructuredSamples/'):
         self.instruments = set() # Holds InstrumentInfo objects of the known instruments
-        self.notes = set()
+        self.pitches = set()
         self.known_instruments_by_pitch = dict() # Holds lists of valid instruments+styles for a given pitch
         self.samples = dict()
         self.load_samples_multithreaded(path=path, n_threads=8)
@@ -18,24 +19,18 @@ class SampleLibrary:
 
     def load_samples_multithreaded(self, path, n_threads):
         wav_files = glob(path + "**/*.wav", recursive=True)
-        
-        threads = [SampleLibrary._LoadingThread(i, f"Thread-{i}", wav_files[(i*round(len(wav_files)/n_threads)):(i+1)*round(len(wav_files)/n_threads)], self) for i in range(n_threads)]
-        for thread in threads:
-            thread.start()
-
-        for t in threads:
-            t.join()
-
+        wav_files = [file for file in wav_files if "Drums" not in file]
+        process_map(self.load_file, wav_files, max_workers=n_threads, chunksize=len(wav_files)//n_threads//10, desc="Loading samples")
     
     def load_file(self, path):
         y, sr = librosa.load(path)
 
         # Get instrument name, style and note from file path
         instrument_name, tail = path.split(
-            "ForMixing\\")[1].split("\\", maxsplit=1)
+            "StructuredSamples\\")[1].split("\\", maxsplit=1)
         style, tail = tail.split("\\")[-2:]
         pitch = tail.split("_")[-1].split(".")[0].lower()
-        self.notes.add(pitch)
+        self.pitches.add(pitch)
 
         sample = BaseSample(instrument=instrument_name, style=style, pitch=pitch, y=y, sr=sr)
 
@@ -72,7 +67,7 @@ class SampleLibrary:
     def load_samples_single_thread(self, path):
         wav_files = glob(path + "**/*.wav", recursive=True)
         instrument_names = set()
-        notes = set()
+        pitches = set()
         samples = dict()
 
         for file in tqdm(wav_files):
@@ -84,7 +79,7 @@ class SampleLibrary:
             instrument_names.add(instrument_name)
             style, tail = tail.split("\\")[-2:]
             note = tail.split("_")[-1].split(".")[0]
-            notes.add(note)
+            pitches.add(note)
 
             # Save in sample dictionary
             if instrument_name not in samples:
@@ -95,7 +90,7 @@ class SampleLibrary:
                 else:
                     samples[instrument_name][style][note] = y
         self.instruments = instrument_names
-        self.notes = notes
+        self.pitches = pitches
         self.samples = samples
 
     def get_sample(self, instrument:str, style:str, pitch:str):
