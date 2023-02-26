@@ -1,7 +1,7 @@
 import librosa
 from glob import glob
 from tqdm import tqdm
-from tqdm.contrib.concurrent import process_map
+from tqdm.contrib.concurrent import thread_map
 import threading
 import numpy as np
 from base_sample import BaseSample
@@ -20,7 +20,7 @@ class SampleLibrary:
     def load_samples_multithreaded(self, path, n_threads):
         wav_files = glob(path + "**/*.wav", recursive=True)
         wav_files = [file for file in wav_files if "Drums" not in file]
-        process_map(self.load_file, wav_files, max_workers=n_threads, chunksize=len(wav_files)//n_threads//10, desc="Loading samples")
+        thread_map(self.load_file, wav_files, max_workers=n_threads, chunksize=len(wav_files)//n_threads//10, desc="Loading samples")
     
     def load_file(self, path):
         y, sr = librosa.load(path)
@@ -128,18 +128,3 @@ class SampleLibrary:
                 instr_info = info
         if instr_info:
             return np.random.choice(list(instr_info.pitches[style]))
-
-    class _LoadingThread(threading.Thread):
-        def __init__(self, threadID, name, filepaths, library):
-            threading.Thread.__init__(self)
-            self.threadID = threadID
-            self.name = name
-            self.filepaths = filepaths
-            self.library = library
-        
-        def run(self):
-            print("Starting " + self.name)
-            for i, filepath in enumerate(self.filepaths):
-                self.library.load_file(filepath)
-                if i % 50 == 0:
-                    print(f"{self.threadID}: Progress: {i}")
