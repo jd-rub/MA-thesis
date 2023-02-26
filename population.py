@@ -1,6 +1,6 @@
 from individual import BaseIndividual, SampleCollection
-import numpy as np
 import bisect
+import pickle
 
 class Population:
     def __init__(self) -> None:
@@ -30,3 +30,12 @@ class Population:
 
     def to_feature_vector(self):
         raise NotImplementedError()
+    
+    def save_as_file(self, filename:str):
+        with open(filename, 'wb') as fp:
+            pickle.dump(self, fp)
+        
+    @classmethod 
+    def from_file(cls, filename:str):
+        with open(filename, 'rb') as fp:
+            return pickle.load(fp)
