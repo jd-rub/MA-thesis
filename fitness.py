@@ -19,10 +19,8 @@ def fitness(x, y) -> float:
     return cosh_distance(stft_x, stft_y)
 
 def fitness_cached(sample: SampleCollection, target_stft: np.ndarray):
-    if sample.stft is None:
-        sample.calc_stft()
-    #return cosh_distance(sample.stft, target_stft)
-    return cosh_distance_no_abs(sample.abs_stft, target_stft)
+    sample_abs_stft = sample.calc_abs_stft()
+    return cosh_distance_no_abs(sample_abs_stft, target_stft)
 
 def multi_onset_fitness_cached(target:Target, individual:BaseIndividual) -> np.ndarray:
     for onset in individual.onset_locations:
@@ -31,9 +29,6 @@ def multi_onset_fitness_cached(target:Target, individual:BaseIndividual) -> np.n
         collection = individual.sample_collections[onset]
         if collection.recalc_fitness:
             target_stft = target.abs_stft_per_snippet[onset]
-            #individual.fitness_by_onset[onset] = fitness_cached(collection, target_stft)
             collection.fitness = fitness_cached(collection, target_stft)
             collection.recalc_fitness = False
-            collection.stft = None # Memory optimization
-    #return np.mean(list(individual.fitness_by_onset.values()))
     return np.mean([collection.fitness for collection in individual.sample_collections.values()])

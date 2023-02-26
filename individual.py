@@ -7,18 +7,18 @@ class SampleCollection:
     def __init__(self, onset:int = 0):
         self.onset = onset # Position of this sample's onset in the approximated piece
         self.samples = [] # List of samples in the collection
-        self.stft = None # STFT of the mixed-down samples
-        self.recalc_fitness = True # If modified, this must be true until fitness is recalculated
+        self.recalc_fitness = True # True if sample has been modified but fitness has yet to be recalculated
         self.fitness = np.inf
     
     def __str__(self):
         s = f"Onset: {self.onset} | " + ", ".join(str(x) for x in self.samples) + f" | Fitness: {self.fitness}"
         return s
 
-    def calc_stft(self):
-        self.stft = librosa.stft(self.to_mixdown())
-        self.abs_stft = np.abs(self.stft)
+    def calc_abs_stft(self):
+        stft = librosa.stft(self.to_mixdown())
+        abs_stft = np.abs(stft)
         self.recalc_fitness = True
+        return abs_stft
 
     def to_mixdown(self):
         # Resize by expanding all samples to the same length
@@ -29,14 +29,10 @@ class SampleCollection:
     @classmethod
     def from_copy(cls, obj):
         instance = cls()
+        instance.onset = obj.onset
         instance.samples = [copy(sample) for sample in obj.samples]
-        if obj.stft is not None:
-            instance.stft = np.copy(obj.stft)
-        else:
-            instance.stft = None
         instance.recalc_fitness = obj.recalc_fitness
         instance.fitness = obj.fitness
-        instance.onset = obj.onset
         return instance
 
 class BaseIndividual:

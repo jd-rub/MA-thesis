@@ -23,8 +23,8 @@ class Mutator:
         mutation = np.random.choice([self.mutate_n_samples, self.mutate_instrument, self.mutate_pitch], p=[0.2, 0.4, 0.4])
         # Apply mutation
         mutated_sample = mutation(sample_collection)
-        # Recalc stft for sample
-        mutated_sample.calc_stft()
+        # Set recalc fitness flag
+        mutated_sample.recalc_fitness = True
         # Return mutated genotype
         return mutated_sample
 
