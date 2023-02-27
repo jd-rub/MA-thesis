@@ -3,6 +3,8 @@ import librosa
 from sample_library import SampleLibrary
 from copy import copy
 
+INITIAL_N_SAMPLES_P = [0.1, 0.3, 0.3, 0.2, 0.1]
+
 class SampleCollection:
     def __init__(self, onset:int = 0):
         self.onset = onset # Position of this sample's onset in the approximated piece
@@ -60,7 +62,7 @@ class BaseIndividual:
         individual = cls(onset_subset)
         for onset in onset_subset:
             collection = individual.sample_collections[onset]
-            for _ in range(np.random.choice(list(range(max_samples_per_onset)), p=[0.1, 0.3, 0.3, 0.2, 0.1]) + 1):
+            for _ in range(np.random.choice(list(range(max_samples_per_onset)), p=INITIAL_N_SAMPLES_P) + 1):
                 random_sample = sample_lib.get_random_sample_uniform()
                 collection.samples.append(random_sample)
         return individual

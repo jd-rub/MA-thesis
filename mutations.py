@@ -3,6 +3,7 @@ from base_sample import BaseSample
 from individual import SampleCollection, BaseIndividual
 from sample_library import SampleLibrary
 
+CHOOSE_MUTATION_P = [0.2, 0.4, 0.4]
 SAMPLE_NUMBER_INCREASE_P = [1, 0.8, 0.4, 0.1, 0] # for 1, 2, 3, 4 or 5 samples currently present
 ALPHA = 6
 BETA = 3
@@ -10,17 +11,38 @@ L_BOUND = 1
 U_BOUND = 10
 
 class Mutator:
-    def __init__(self, sample_library:SampleLibrary, alpha=ALPHA, beta=BETA, l_bound=L_BOUND, u_bound=U_BOUND, sample_number_increase_p:list[float]=SAMPLE_NUMBER_INCREASE_P):
+    def __init__(self, sample_library:SampleLibrary, alpha:int=ALPHA, beta:int=BETA, l_bound:int=L_BOUND, u_bound:int=U_BOUND, sample_number_increase_p:list[float]=SAMPLE_NUMBER_INCREASE_P, choose_mutation_p:list[float]=CHOOSE_MUTATION_P):
+        """Creates an instance of the Mutator class.
+
+        Parameters
+        ----------
+        sample_library : SampleLibrary
+            Initialized sample library
+        alpha : int, optional
+            Used in calculation of number of mutations, by default ALPHA
+        beta : int, optional
+            Used in calculation of number of mutations, by default BETA
+        l_bound : int, optional
+            Minimum number of applied mutations to an individual, by default L_BOUND
+        u_bound : int, optional
+            Maximum number of applied mutations to an individual, by default U_BOUND
+        sample_number_increase_p : list[float], optional
+            Probabilites of increasing the number of samples if 
+            the mutate_n_samples mutation is chosen, by default SAMPLE_NUMBER_INCREASE_P
+        choose_mutation_p : list[float], optional
+            Probabilities of each mutation to be applied, by default CHOOSE_MUTATION_P
+        """
         self.sample_library = sample_library
         self.alpha = alpha
         self.beta = beta
         self.l_bound = l_bound
         self.u_bound = u_bound
         self.sample_number_increase_p = sample_number_increase_p
+        self.choose_mutation_p = choose_mutation_p
 
     def mutate_sample_collection(self, sample_collection:SampleCollection) -> SampleCollection:
         # Decide which mutation to apply
-        mutation = np.random.choice([self.mutate_n_samples, self.mutate_instrument, self.mutate_pitch], p=[0.2, 0.4, 0.4])
+        mutation = np.random.choice([self.mutate_n_samples, self.mutate_instrument, self.mutate_pitch], p=self.choose_mutation_p)
         # Apply mutation
         mutated_sample = mutation(sample_collection)
         # Set recalc fitness flag
