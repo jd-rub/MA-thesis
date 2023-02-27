@@ -38,7 +38,7 @@ def base_algorithm_1plus1_single_onset(target_y:Union[np.ndarray, list], max_ste
     
     return best_individual
 
-def base_algorithm_1plus1_multi_offset(target_y:Union[np.ndarray, list], max_steps:int, sample_lib:SampleLibrary, onset_frac:int = 0.1):
+def base_algorithm_1plus1_multi_onset(target_y:Union[np.ndarray, list], max_steps:int, sample_lib:SampleLibrary, onset_frac:int = 0.1):
     mutator = Mutator(sample_lib)
     
     target = Target(target_y)

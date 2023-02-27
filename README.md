@@ -13,7 +13,7 @@
 **L_BOUND** = 1: Minimum number of mutations to an individual  
 **U_BOUND** = 10: Maximum mumber of mutations to an individual  
 The number of mutations applied to an individual is calculated as follows:
-floor(G * α + β), where G is a Gaussian number with mean 0 and std=1. The result is clipped to the interval [L_BOUND, U_BOUND]  
+floor(G * α + β), where G is a Gaussian number with mean 0 and std=1. The result is clipped to the interval [L_BOUND, U_BOUND].  
 
 **SAMPLE_NUMBER_INCREASE_P** = [1, 0.8, 0.4, 0.1, 0]: for 1, 2, 3, 4 or 5 samples currently present in the individual, determines the probability of an increase of samples, if the mutate_n_samples mutation is chosen.   
 
