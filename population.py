@@ -10,7 +10,7 @@ class Population:
     def __str__(self) -> str:
         return "\n".join([str(individual) for individual in self.individuals])
 
-    def calc_best_fitnesses(self):
+    def calc_best_fitnesses_per_onset(self):
         for individual in self.individuals:
             for collection in individual.sample_collections.values():
                 if collection.fitness < self.best_collections_per_onset.get(collection.onset, SampleCollection()).fitness:
@@ -20,16 +20,18 @@ class Population:
         self.individuals.sort(key=lambda item: item.fitness)
 
     def insert_individual(self, individual:BaseIndividual):
+        # Insert individual
         bisect.insort_left(self.individuals, individual, key=lambda item: item.fitness)
+        # Update record of best onset approximations
+        for collection in individual.sample_collections.values():
+            if collection.fitness < self.best_collections_per_onset[collection.onset].fitness:
+                self.best_collections_per_onset[collection.onset] = collection
 
     def remove_worst(self, n:int):
         self.individuals = self.individuals[:-n]
 
-    def get_best_individual(self):
+    def get_best_individual(self) -> BaseIndividual:
         return self.individuals[0]
-
-    def to_feature_vector(self):
-        raise NotImplementedError()
     
     def save_as_file(self, filename:str):
         with open(filename, 'wb') as fp:

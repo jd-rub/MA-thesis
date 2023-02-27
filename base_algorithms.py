@@ -3,11 +3,11 @@ from individual import BaseIndividual, SampleCollection
 from mutations import Mutator
 from fitness import fitness, multi_onset_fitness_cached
 from population import Population
+from population_logging import PopulationLogger
 from target import Target
 from typing import Union
 import numpy as np
 from tqdm import tqdm
-import bisect
 
 MAX_SAMPLES_PER_ONSET = 5
 STOPPING_FITNESS = 0.001
@@ -40,18 +40,14 @@ def base_algorithm_1plus1_single_onset(target_y:Union[np.ndarray, list], max_ste
 
 def base_algorithm_1plus1_multi_offset(target_y:Union[np.ndarray, list], max_steps:int, sample_lib:SampleLibrary, onset_frac:int = 0.1):
     mutator = Mutator(sample_lib)
-
-    # onsets = librosa.onset.onset_detect(y=target_y, units="samples")
     
     target = Target(target_y)
 
     best_individual = BaseIndividual.create_multi_onset_individual(target.onsets, onset_frac, sample_lib)
-    #best_individual.fitness = multi_onset_fitness(target_y, best_individual, onsets)
     best_individual.fitness = multi_onset_fitness_cached(target=target, individual=best_individual)
 
     for n in (pbar := tqdm(range(max_steps))):
         candidate_individual = mutator.mutate_individual(BaseIndividual.from_copy(best_individual))
-        # candidate_individual.fitness = multi_onset_fitness(target_y, candidate_individual, onsets)
         candidate_individual.fitness = multi_onset_fitness_cached(target=target, individual=candidate_individual)
 
         if candidate_individual.fitness < best_individual.fitness:
@@ -63,7 +59,7 @@ def base_algorithm_1plus1_multi_offset(target_y:Union[np.ndarray, list], max_ste
     
     return best_individual
 
-def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_lib:SampleLibrary, popsize:int, n_offspring:int, onset_frac:float) -> Population:
+def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_lib:SampleLibrary, popsize:int, n_offspring:int, onset_frac:float, logger:PopulationLogger=None) -> Population:
     """Evolutionary approximation of a polyphonic musical piece
 
     Parameters
@@ -80,6 +76,8 @@ def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_li
         Number of offspring (λ) per generation 
     onset_frac : float
         Fraction of approximated onsets (φ) per individual
+    logger: PopulationLogger
+        Logging object, if desired. Can be None to omit logging
 
     Returns
     -------
@@ -96,7 +94,7 @@ def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_li
     for individual in tqdm(population.individuals, desc="Calculating initial fitness"):
         # Calc initial fitness
         individual.fitness = multi_onset_fitness_cached(target, individual)
-    population.calc_best_fitnesses() # Initial record of best approximations of each onset
+    population.calc_best_fitnesses_per_onset() # Initial record of best approximations of each onset
     population.sort_individuals_by_fitness() # Sort population for easier management
 
     # Evolutionary Loop
@@ -116,7 +114,8 @@ def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_li
 
         # Update progress bar
         pbar.set_postfix_str('\t' * 100 + f"Best individual: {str(population.get_best_individual())}")
-
+        if logger:
+            logger.log_population(population, step)
 
     # Return final population
     return population
