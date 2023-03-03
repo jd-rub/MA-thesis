@@ -4,7 +4,7 @@ from sample_library import SampleLibrary
 
 def extract_features_for_window(pop: Population, lib: SampleLibrary, window_start: int, window_end: int) -> np.ndarray:
     ## Grab the onsets in those windows, and the associated best records from the population
-    relevant_collections = [collection for collection in pop.best_collections_per_onset.values() if collection.onset in range(window_start, window_end)]
+    relevant_collections = [collection for collection in pop.archive.values() if collection.onset in range(window_start, window_end)]
 
     ## For each window separately, calculate the maximum, minimum, and mean fitnesses for each occasion of
     ## An instrument

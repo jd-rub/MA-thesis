@@ -1,6 +1,5 @@
 import numpy as np
-from base_sample import BaseSample
-from individual import SampleCollection, BaseIndividual
+from individual import BaseIndividual
 from sample_library import SampleLibrary
 
 CHOOSE_MUTATION_P = [0.2, 0.4, 0.4]
@@ -40,49 +39,85 @@ class Mutator:
         self.sample_number_increase_p = sample_number_increase_p
         self.choose_mutation_p = choose_mutation_p
 
-    def mutate_sample_collection(self, sample_collection:SampleCollection) -> SampleCollection:
-        # Decide which mutation to apply
-        mutation = np.random.choice([self.mutate_n_samples, self.mutate_instrument, self.mutate_pitch], p=self.choose_mutation_p)
-        # Apply mutation
-        mutated_sample = mutation(sample_collection)
-        # Set recalc fitness flag
-        mutated_sample.recalc_fitness = True
-        # Return mutated genotype
-        return mutated_sample
-
     def mutate_individual(self, individual:BaseIndividual) -> BaseIndividual:
+        """Mutates an individual with one or more of the available mutation operations.
+
+        Parameters
+        ----------
+        individual : SampleCollection
+            Individual that shall be mutated. 
+            Note that python uses references and if you wish to 
+            preserve the original individual, then pass a copy of it to this method instead.
+
+        Returns
+        -------
+        SampleCollection
+            Mutated individual.
+        """
         # Draw number of mutation
         n_mutations = int(np.clip(np.floor(np.random.normal(loc=0, scale=1) * self.alpha + self.beta), a_min=self.l_bound, a_max=self.u_bound))
 
         for _ in range(n_mutations):
-            # Pick a random sample collection
-            onset = np.random.choice(individual.onset_locations)
-            collection = individual.sample_collections[onset]
-            individual.sample_collections[onset] = self.mutate_sample_collection(collection)
+            # Decide which mutation to apply
+            mutation = np.random.choice([self.mutate_n_samples, self.mutate_instrument, self.mutate_pitch], p=self.choose_mutation_p)
+            # Apply mutation
+            mutated_individual = mutation(individual)
+            # Set recalc fitness flag
+            mutated_individual.recalc_fitness = True
+            mutated_individual.abs_stft = None
         
-        return individual
+        return mutated_individual
 
-    def mutate_n_samples(self, sample_collection:SampleCollection) -> SampleCollection:
-        pre_mutation_n_samples = len(sample_collection.samples)
+    def mutate_n_samples(self, individual:BaseIndividual) -> BaseIndividual:
+        """Mutates the number of samples in the individual.
+
+        Parameters
+        ----------
+        sample_collection : SampleCollection
+            Individual that shall be mutated.
+
+        Returns
+        -------
+        SampleCollection
+            The individual after the number of samples was changed.
+        """
+        pre_mutation_n_samples = len(individual.samples)
         increase_probability = self.sample_number_increase_p[pre_mutation_n_samples - 1]
         # Increase or decrease number of samples
         rnd = np.random.random()
         if rnd < increase_probability:
             # Add a sample
             new_sample = self.sample_library.get_random_sample_uniform()
-            sample_collection.samples.append(new_sample)
+            individual.samples.append(new_sample)
         else:
             # Remove a sample
             idx = np.random.choice(pre_mutation_n_samples)
-            sample_collection.samples.pop(idx)
-        return sample_collection
+            individual.samples.pop(idx)
+        return individual
 
-    def mutate_instrument(self, sample_collection:SampleCollection) -> SampleCollection:
-        pre_mutation_n_samples = len(sample_collection.samples)
+    def mutate_instrument(self, individual:BaseIndividual) -> BaseIndividual:
+        """Changes one of the instruments in the individual to a different one.
+
+        Parameters
+        ----------
+        sample_collection : SampleCollection
+            Individual that shall be mutated.
+
+        Returns
+        -------
+        SampleCollection
+            The individual after an instrument was changed.
+
+        Raises
+        ------
+        RuntimeError
+            If no new sample could be found for some reason.
+        """
+        pre_mutation_n_samples = len(individual.samples)
 
         # Choose one instrument
         change_idx = np.random.choice(pre_mutation_n_samples)
-        pitch = sample_collection.samples[change_idx].pitch
+        pitch = individual.samples[change_idx].pitch
 
         # Randomly change instrument and style uniformly
         new_instrument, new_style = self.sample_library.get_random_instrument_for_pitch(pitch)
@@ -91,22 +126,34 @@ class Mutator:
         # See if old pitch exists for new instrument
         new_sample = self.sample_library.get_sample(new_instrument, new_style, pitch)
         if new_sample:
-            sample_collection.samples[change_idx] = new_sample
+            individual.samples[change_idx] = new_sample
         else:
             # Something went wrong
             raise RuntimeError("A sample for the requested instrument, style and pitch does not exist.")
 
-        return sample_collection
+        return individual
 
-    def mutate_pitch(self, sample_collection:SampleCollection) -> SampleCollection:
-        pre_mutation_n_samples = len(sample_collection.samples)
+    def mutate_pitch(self, individual:BaseIndividual) -> BaseIndividual:
+        """Changes the pitch of one of the samples in the given individual
+
+        Parameters
+        ----------
+        sample_collection : SampleCollection
+            Individual that shall be mutated.
+
+        Returns
+        -------
+        SampleCollection
+            The individual after one of its samples' pitch was changed.
+        """
+        pre_mutation_n_samples = len(individual.samples)
 
         # Choose one instrument
         change_idx = np.random.choice(pre_mutation_n_samples)
-        chosen_sample = sample_collection.samples[change_idx]
+        chosen_sample = individual.samples[change_idx]
         
         # Choose a new pitch
-        new_pitch = self.sample_library.get_random_pitch_for_instrument(chosen_sample.instrument, chosen_sample.style)
-        sample_collection.samples[change_idx].pitch = new_pitch
+        new_pitch = self.sample_library.get_random_pitch_for_instrument_uniform(chosen_sample.instrument, chosen_sample.style)
+        individual.samples[change_idx].pitch = new_pitch
 
-        return sample_collection
+        return individual

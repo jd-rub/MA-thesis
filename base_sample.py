@@ -1,3 +1,4 @@
+from pitch import Pitch
 class BaseSample:
     def __init__(self, instrument, style, pitch, y, sr):
         self.instrument = instrument

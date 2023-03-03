@@ -1,5 +1,5 @@
 from sample_library import SampleLibrary
-from individual import BaseIndividual, SampleCollection
+from individual import BaseIndividual
 from mutations import Mutator
 from fitness import fitness, multi_onset_fitness_cached
 from population import Population
@@ -14,41 +14,14 @@ STOPPING_FITNESS = 0.001
 
 def base_algorithm_1plus1_single_onset(target_y:Union[np.ndarray, list], max_steps:int, sample_lib:SampleLibrary):
     mutator = Mutator(sample_lib)
-
-    best_individual = BaseIndividual()
-    best_individual.onset_locations.add(0)
-    best_individual.sample_collections[0] = SampleCollection()
-    for _ in range(np.random.choice(list(range(MAX_SAMPLES_PER_ONSET)), p=[0.1, 0.3, 0.3, 0.2, 0.1]) + 1):
-        random_sample = sample_lib.get_random_sample_uniform()
-        best_individual.sample_collections[0].samples.append(random_sample)
-    
-    best_individual.fitness = fitness(target_y, best_individual.sample_collections[0].to_mixdown())
-
-    for n in (pbar := tqdm(range(max_steps))):
-        candidate_individual = BaseIndividual()
-        candidate_individual.sample_collections[0] = mutator.mutate_sample_collection(best_individual.sample_collections[0])
-        candidate_individual.fitness = fitness(target_y, candidate_individual.sample_collections[0].to_mixdown())
-
-        if candidate_individual.fitness < best_individual.fitness:
-            best_individual = candidate_individual
-            pbar.set_postfix_str('\t' * 100 + f"Best individual: {str(best_individual)} with fitness {best_individual.fitness}")
-
-        if best_individual.fitness < STOPPING_FITNESS:
-            break
-    
-    return best_individual
-
-def base_algorithm_1plus1_multi_onset(target_y:Union[np.ndarray, list], max_steps:int, sample_lib:SampleLibrary, onset_frac:int = 0.1):
-    mutator = Mutator(sample_lib)
-    
     target = Target(target_y)
 
-    best_individual = BaseIndividual.create_multi_onset_individual(target.onsets, onset_frac, sample_lib)
-    best_individual.fitness = multi_onset_fitness_cached(target=target, individual=best_individual)
+    best_individual = BaseIndividual.create_random_individual(sample_lib=sample_lib, phi=1)    
+    best_individual.fitness = fitness(target.y, best_individual.to_mixdown())
 
     for n in (pbar := tqdm(range(max_steps))):
         candidate_individual = mutator.mutate_individual(BaseIndividual.from_copy(best_individual))
-        candidate_individual.fitness = multi_onset_fitness_cached(target=target, individual=candidate_individual)
+        candidate_individual.fitness = fitness(target.y, candidate_individual.to_mixdown())
 
         if candidate_individual.fitness < best_individual.fitness:
             best_individual = candidate_individual
@@ -90,11 +63,12 @@ def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_li
 
     # Create initial population
     population = Population()
-    population.individuals = [BaseIndividual.create_multi_onset_individual(target.onsets, onset_frac, sample_lib) for _ in tqdm(range(popsize), desc="Initializing Population")]
+    population.individuals = [BaseIndividual.create_random_individual(sample_lib=sample_lib, phi=onset_frac) for _ in tqdm(range(popsize), desc="Initializing Population")]
     for individual in tqdm(population.individuals, desc="Calculating initial fitness"):
         # Calc initial fitness
-        individual.fitness = multi_onset_fitness_cached(target, individual)
-    population.calc_best_fitnesses_per_onset() # Initial record of best approximations of each onset
+        individual.fitness_per_onset = multi_onset_fitness_cached(target, individual)
+        individual.calc_phi_fitness()
+    population.init_archive(target.onsets) # Initial record of best approximations of each onset
     population.sort_individuals_by_fitness() # Sort population for easier management
 
     # Evolutionary Loop
@@ -103,9 +77,14 @@ def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_li
         parents = np.random.choice(population.individuals, size=n_offspring)
         offspring = [mutator.mutate_individual(BaseIndividual.from_copy(individual)) for individual in parents]
         
+        # DEBUG
+        if step > 1500:
+            a = 1
+
         # Evaluate fitness of offspring
         for individual in offspring:
-            individual.fitness = multi_onset_fitness_cached(target, individual)
+            individual.fitness_per_onset = multi_onset_fitness_cached(target, individual)
+            individual.calc_phi_fitness()
             # Insert individual into population
             population.insert_individual(individual)
         
