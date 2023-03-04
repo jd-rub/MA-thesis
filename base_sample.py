@@ -8,7 +8,7 @@ class BaseSample:
         self.sr = sr
     
     def __str__(self):
-        return f"({self.instrument}, {self.style}, {self.pitch})"
+        return f"({self.instrument}, {self.style}, {self.pitch.name})"
 
     def to_audio(self):
         return self.y

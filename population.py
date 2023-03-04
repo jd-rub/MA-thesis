@@ -23,7 +23,7 @@ class Population:
         for individual in self.individuals:
             for i, onset in enumerate(onsets):
                 if individual.fitness_per_onset[i] < self.archive.get(onset, BaseIndividual()).fitness:
-                    self.archive[onset] = individual
+                    self.archive[onset] = ArchiveRecord(onset=onset, fitness=individual.fitness_per_onset[i], individual=individual)
 
     def sort_individuals_by_fitness(self):
         """Sorts the list of individuals by fitness. Meant to only be done upon initialization. 
@@ -43,8 +43,9 @@ class Population:
         bisect.insort_left(self.individuals, individual, key=lambda item: item.fitness)
         # Update record of best onset approximations
         for i, onset in enumerate(self.archive):
-            if individual.fitness_per_onset[i] < self.archive[onset].fitness_per_onset[i]:
-                self.archive[onset] = individual
+            if individual.fitness_per_onset[i] < self.archive[onset].fitness:
+                self.archive[onset].individual = individual
+                self.archive[onset].fitness = individual.fitness_per_onset[i]
 
     def remove_worst(self, n:int):
         """Removes the worst n individuals from the population.
@@ -94,3 +95,9 @@ class Population:
         """
         with open(filename, 'rb') as fp:
             return pickle.load(fp)
+
+class ArchiveRecord():
+    def __init__(self, onset:int, fitness:float=None, individual:BaseIndividual=None) -> None:
+        self.onset = onset
+        self.fitness = fitness
+        self.individual = individual

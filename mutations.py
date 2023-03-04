@@ -153,7 +153,9 @@ class Mutator:
         chosen_sample = individual.samples[change_idx]
         
         # Choose a new pitch
-        new_pitch = self.sample_library.get_random_pitch_for_instrument_uniform(chosen_sample.instrument, chosen_sample.style)
+        #new_pitch = self.sample_library.get_random_pitch_for_instrument_uniform(chosen_sample.instrument, chosen_sample.style)
+        shift_by = np.round(np.random.normal(loc=0, scale=6))
+        new_pitch = self.sample_library.get_shifted_pitch(chosen_sample.instrument, chosen_sample.style, chosen_sample.pitch, shift_by)
         individual.samples[change_idx].pitch = new_pitch
 
         return individual

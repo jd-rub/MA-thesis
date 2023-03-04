@@ -32,7 +32,7 @@ def base_algorithm_1plus1_single_onset(target_y:Union[np.ndarray, list], max_ste
     
     return best_individual
 
-def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_lib:SampleLibrary, popsize:int, n_offspring:int, onset_frac:float, logger:PopulationLogger=None) -> Population:
+def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_lib:SampleLibrary, popsize:int, n_offspring:int, onset_frac:float, mutator:Mutator=None, logger:PopulationLogger=None) -> Population:
     """Evolutionary approximation of a polyphonic musical piece
 
     Parameters
@@ -49,6 +49,8 @@ def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_li
         Number of offspring (λ) per generation 
     onset_frac : float
         Fraction of approximated onsets (φ) per individual
+    mutator : Mutator
+        Pre-initialized Mutator object that supports the mutate_individual(BaseIndividual) method
     logger: PopulationLogger
         Logging object, if desired. Can be None to omit logging
 
@@ -58,7 +60,8 @@ def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_li
         The full population of individual approximations after max_steps of iterations
     """
     # Initialization
-    mutator = Mutator(sample_lib) # Applies mutations and handles stft updates
+    if mutator is None:
+        mutator = Mutator(sample_lib) # Applies mutations and handles stft updates
     target = Target(target_y)
 
     # Create initial population
@@ -76,10 +79,6 @@ def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_li
         # Create lambda offspring
         parents = np.random.choice(population.individuals, size=n_offspring)
         offspring = [mutator.mutate_individual(BaseIndividual.from_copy(individual)) for individual in parents]
-        
-        # DEBUG
-        if step > 1500:
-            a = 1
 
         # Evaluate fitness of offspring
         for individual in offspring:
@@ -92,7 +91,7 @@ def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_li
         population.remove_worst(n_offspring)
 
         # Update progress bar
-        pbar.set_postfix_str('\t' * 100 + f"Best individual: {str(population.get_best_individual())}")
+        pbar.set_postfix_str(f"Best individual: {str(population.get_best_individual())}")
         if logger:
             logger.log_population(population, step)
 

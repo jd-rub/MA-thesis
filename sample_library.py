@@ -154,7 +154,7 @@ class SampleLibrary:
         BaseSample
             Uniformly drawn random sample from the library.
         """
-        instrument = np.random.choice(list(self.instruments))
+        instrument = np.random.choice(list(self.instruments.values()))
         style = np.random.choice(list(instrument.styles))
         pitch = np.random.choice(list(instrument.pitches[style]))
         return self.get_sample(instrument.name, style, pitch)
@@ -259,11 +259,13 @@ class SampleLibrary:
             instr_info = self.instruments[instrument_name]   
             if style in instr_info.styles:     
                 old_pitch_num = old_pitch.value
-                new_pitch_num = old_pitch_num + shift_by
+                new_pitch_num = int(np.clip(old_pitch_num + shift_by, a_min=20, a_max=108))
                 new_pitch = Pitch(new_pitch_num)
                 # Handle shift out of bounds for instrument (Clip to instrument range)
-                if new_pitch > instr_info.max_pitch[style]:
-                    new_pitch = instr_info.max_pitch[style]
+                if new_pitch > instr_info.max_pitches[style]:
+                    new_pitch = instr_info.max_pitches[style]
+                elif new_pitch < instr_info.min_pitches[style]:
+                    new_pitch = instr_info.min_pitches[style]
                 # return new pitch
                 return new_pitch
             else:

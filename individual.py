@@ -15,7 +15,7 @@ class BaseIndividual:
         self.abs_stft = None # Absolute stft values for fitness calculation
     
     def __str__(self):
-        s = f"Contained samples: " + ", ".join(str(x) for x in self.samples) + f" | Fitness: {self.fitness}"
+        s = f"Fitness: {self.fitness} | " + ", ".join(str(x) for x in self.samples)
         return s
 
     def calc_abs_stft(self) -> None:
@@ -33,6 +33,7 @@ class BaseIndividual:
         top_fitnesses = self.fitness_per_onset[partition_idx[:n_onsets]]
         self.fitness = np.mean(top_fitnesses) 
         self.recalc_fitness = False
+        self.abs_stft = None # Memory optimization
 
     def to_mixdown(self) -> np.ndarray:
         """Creates a mix of the samples contained in the collection.
