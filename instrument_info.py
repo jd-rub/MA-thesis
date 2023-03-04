@@ -1,9 +1,16 @@
+from pitch import Pitch
 class InstrumentInfo:
     def __init__(self, name:str, styles:set, pitches:dict, is_single_style:bool):
         self.name = name # Instrument name string
-        self.styles = styles # Set of known instrument styles, or {"base"} if only single style exists
+        self.styles = styles # Set of known instrument styles
         self.pitches = pitches # Dict of pairs {style: {B2, A2, Ais2, ...}}
-        self.is_single_style = is_single_style # If len(styles) = 1
+        self.min_pitches = dict() # Lowest possible pitch per style
+        self.max_pitches = dict() # Highest possible pitch per style
     
+    def calc_min_max_pitches(self):
+        for style in self.styles:
+                self.min_pitches[style] = min(self.pitches[style])
+                self.max_pitches[style] = max(self.pitches[style])
+
     def __str__(self) -> str:
         return f"Instrument Name: {self.name}, Instrument Styles: {self.styles}, Known Pitches: {self.pitches}"

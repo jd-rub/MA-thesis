@@ -1,6 +1,6 @@
 from pitch import Pitch
 class BaseSample:
-    def __init__(self, instrument, style, pitch, y, sr):
+    def __init__(self, instrument, style, pitch:Pitch, y, sr):
         self.instrument = instrument
         self.style = style
         self.pitch = pitch

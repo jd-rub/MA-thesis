@@ -7,13 +7,14 @@ from base_sample import BaseSample
 from instrument_info import InstrumentInfo
 from pitch import Pitch
 
-# TODO: Set instruments, styles, and pitches in enum-style
+# TODO: Set instruments and styles in enum-style
 class SampleLibrary:
     def __init__(self, path='./audio/StructuredSamples/'):
-        self.instruments = set() # Holds InstrumentInfo objects of the known instruments
+        self.instruments = dict() # Holds Name: InstrumentInfo pairs of the known instruments
         self.known_instruments_by_pitch = dict() # Holds lists of valid instruments+styles for a given pitch
         self.samples = dict()
         self.load_samples_multithreaded(path=path, n_threads=8)
+        self.extract_instrument_info()
         pass
 
     def load_samples_multithreaded(self, path:str, n_threads:int) -> None:
@@ -44,28 +45,28 @@ class SampleLibrary:
         instrument_name, tail = path.split(
             "StructuredSamples\\")[1].split("\\", maxsplit=1)
         style, tail = tail.split("\\")[-2:]
-        pitch = tail.split("_")[-1].split(".")[0].lower()
+        pitch_str = tail.split("_")[-1].split(".")[0].lower()
+
+        pitch = Pitch[pitch_str]
 
         sample = BaseSample(instrument=instrument_name, style=style, pitch=pitch, y=y, sr=sr)
 
-        new_instrument = True
-        for known_instrument in self.instruments:
-            if known_instrument.name == instrument_name:
-                # Handle style
-                if style not in known_instrument.styles:
-                    known_instrument.styles.add(style)
-                    known_instrument.pitches[style] = {pitch}
-                else:
-                    known_instrument.pitches[style].add(pitch)
-                # Handle pitch by instrument mapping
-                if pitch in self.known_instruments_by_pitch:
-                    self.known_instruments_by_pitch[pitch].add((instrument_name, style))
-                else:
-                    self.known_instruments_by_pitch[pitch] = {(instrument_name, style)}
-                new_instrument = False
-
-        if new_instrument:
-            self.instruments.add(InstrumentInfo(name=instrument_name, styles={style}, pitches={style:{pitch}}, is_single_style=False))
+        if instrument_name in self.instruments:
+            instrument = self.instruments[instrument_name]
+            # Handle style
+            if style not in instrument.styles:
+                instrument.styles.add(style)
+                instrument.pitches[style] = {pitch}
+            else:
+                instrument.pitches[style].add(pitch)
+            # Handle pitch by instrument mapping
+            if pitch in self.known_instruments_by_pitch:
+                self.known_instruments_by_pitch[pitch].add((instrument_name, style))
+            else:
+                self.known_instruments_by_pitch[pitch] = {(instrument_name, style)}
+            
+        else:
+            self.instruments[instrument_name] = InstrumentInfo(name=instrument_name, styles={style}, pitches={style:{pitch}}, is_single_style=False)
             self.known_instruments_by_pitch[pitch] = {(instrument_name, style)}
 
         # Save in sample dictionary
@@ -109,6 +110,10 @@ class SampleLibrary:
                     samples[instrument_name][style][note] = y
         self.instruments = instrument_names
         self.samples = samples
+
+    def extract_instrument_info(self):
+        for instrument in self.instruments.values():
+            instrument.calc_min_max_pitches()
 
     def get_sample(self, instrument:str, style:str, pitch:str) -> BaseSample:
         """Returns the audio of a sample.
@@ -170,12 +175,12 @@ class SampleLibrary:
         idx = np.random.choice(len(self.known_instruments_by_pitch[pitch]))
         return list(self.known_instruments_by_pitch[pitch])[idx]
 
-    def get_random_style_for_instrument(self, instrument:str) -> str:
+    def get_random_style_for_instrument(self, instrument_name:str) -> str:
         """Helper function to draw a random style for a provided instrument.
 
         Parameters
         ----------
-        instrument : str
+        instrument_name : str
             Desired instrument that the style must be valid for.
 
         Returns
@@ -188,50 +193,80 @@ class SampleLibrary:
         ValueError
             If instrument was not found in the library.
         """
-        instr_info = None
-        for info in self.instruments:
-            if instrument == info.name:
-                instr_info = info
-        if instr_info:
+        if instrument_name in self.instruments:
+            instr_info = self.instruments[instrument_name]
             # Instrument found, return random style
             return np.random.choice(list(instr_info.styles))
         else:
-            raise ValueError(f"Instrument '{instrument}' not found in sample library.")
+            raise ValueError(f"Instrument '{instrument_name}' not found in sample library.")
 
-    def get_random_pitch_for_instrument_uniform(self, instrument:str, style:str) -> str: 
+    def get_random_pitch_for_instrument_uniform(self, instrument_name:str, style:str) -> Pitch: 
         """Helper function to draw a uniform random pitch for a given instrument and style.
 
         Parameters
         ----------
-        instrument : str
+        instrument_name : str
             Desired instrument that the pitch must be valid for.
         style : str
             Desired style that the pitch must be valid for.
 
         Returns
         -------
-        str
-            Name of the pitch that was drawn.
+        Pitch
+            The pitch that was drawn.
             
         Raises
         ------
         ValueError
             If instrument is not known to the library, or the style is not valid for the instrument.
         """
-        instr_info = None
-        for info in self.instruments:
-            if instrument == info.name:
-                instr_info = info
-        if instr_info is None:
-            raise ValueError(f"Instrument '{instrument}' not found in sample library.")
-        if style in instr_info.pitches:
-            return np.random.choice(list(instr_info.pitches[style]))
+        if instrument_name in self.instruments:
+            instr_info = self.instruments[instrument_name]
+            if style in instr_info.pitches:
+                return np.random.choice(list(instr_info.pitches[style]))
+            else:
+                raise ValueError(f"Style '{style}' not valid for instrument {instrument_name}.")
         else:
-            raise ValueError(f"Style '{style}' not valid for instrument {instrument}.")
+            raise ValueError(f"Instrument '{instrument_name}' not found in sample library.")
     
-    def get_shifted_pitch(self, instrument:str, style:str, old_pitch:str, shift_by:int) -> str:
-        # Get old pitch from pitch table
-        # Get shifted pitch from pitch table
-        # Handle shift out of bounds for instrument (Clip to instrument range)
-        # return new pitch
-        return
+    def get_shifted_pitch(self, instrument_name:str, style:str, old_pitch:Pitch, shift_by:int) -> Pitch:
+        """Returns a clipped, shifted value by shift_by halftones for a given instrument and style.
+
+        Parameters
+        ----------
+        instrument_name : str
+            Name of the desired instrument.
+        style : str
+            Name of the desired style.
+        old_pitch : Pitch
+            The pitch to shift away from.
+        shift_by : int
+            How many halftones to shift by.
+
+        Returns
+        -------
+        Pitch
+            The old_pitch shifted by shift_by steps, or the min/max pitches supported by the instrument.
+
+        Raises
+        ------
+        ValueError
+            If the style is not valid for the given instrument.
+        ValueError
+            If the instrument is not known to the sample library.
+        """
+        if instrument_name in self.instruments:
+            instr_info = self.instruments[instrument_name]   
+            if style in instr_info.styles:     
+                old_pitch_num = old_pitch.value
+                new_pitch_num = old_pitch_num + shift_by
+                new_pitch = Pitch(new_pitch_num)
+                # Handle shift out of bounds for instrument (Clip to instrument range)
+                if new_pitch > instr_info.max_pitch[style]:
+                    new_pitch = instr_info.max_pitch[style]
+                # return new pitch
+                return new_pitch
+            else:
+                raise ValueError(f"Style '{style}' not valid for instrument {instrument_name}.")
+        else:
+            raise ValueError(f"Instrument '{instrument_name}' not found in sample library.")

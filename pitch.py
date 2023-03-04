@@ -1,6 +1,6 @@
-from enum import Enum
+from enum import IntEnum
 
-class Pitch(Enum):
+class Pitch(IntEnum):
     gis0 = 20
     a0 = 21
     ais0 = 22
