@@ -12,3 +12,10 @@ class BaseSample:
 
     def to_audio(self):
         return self.y
+
+class FlatSample(BaseSample):
+    def __init__(self, instrument, style, pitch: Pitch, y=None, sr=None):
+        super().__init__(instrument, style, pitch, y = None, sr = None)
+    
+    def expand(self, sample_lib) -> BaseSample:
+        return sample_lib.get_sample(self.instrument, self.style, self.pitch)

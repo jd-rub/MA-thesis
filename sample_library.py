@@ -115,7 +115,7 @@ class SampleLibrary:
         for instrument in self.instruments.values():
             instrument.calc_min_max_pitches()
 
-    def get_sample(self, instrument:str, style:str, pitch:str) -> BaseSample:
+    def get_sample(self, instrument:str, style:str, pitch:Pitch) -> BaseSample:
         """Returns the audio of a sample.
 
         Parameters
@@ -159,7 +159,7 @@ class SampleLibrary:
         pitch = np.random.choice(list(instrument.pitches[style]))
         return self.get_sample(instrument.name, style, pitch)
 
-    def get_random_instrument_for_pitch(self, pitch:str) -> str:
+    def get_random_instrument_for_pitch(self, pitch:Pitch) -> str:
         """Helper function to draw a random instrument that is valid for the provided pitch.
 
         Parameters

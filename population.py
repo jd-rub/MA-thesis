@@ -1,4 +1,5 @@
 from individual import BaseIndividual
+from base_sample import BaseSample, FlatSample
 import bisect
 import pickle
 from typing import Union
@@ -68,33 +69,64 @@ class Population:
         """
         return self.individuals[0]
     
-    def save_as_file(self, filename:str):
+    def _flatten(self):
+        """Flattens the population to reduce disk space usage.
+        """
+        for individual in self.individuals:
+            for i, sample in enumerate(individual.samples):
+                individual.samples[i] = FlatSample(sample.instrument, sample.style, sample.pitch)
+
+    def _expand(self, sample_lib):
+        """Expands a flattened population by reloading the included samples from the sample library.
+
+        Parameters
+        ----------
+        sample_lib : SampleLibrary
+            Initialized sample library from which to load the samples in this population.
+        """
+        for individual in self.individuals:
+            for i, sample in enumerate(individual.samples):
+                individual.samples[i] = sample_lib.get_sample(sample.instrument, sample.style, sample.pitch)
+
+    def save_as_file(self, filename:str, flatten:bool=True):
         """Saves the population to a pickled file.
 
         Parameters
         ----------
         filename : str
             Desired name of the file.
+        flatten : bool 
+            If True, will turn all samples into FlatSample to drastically reduce disk space.
+            (Use expand=True when the .pkl file is read later)
         """
+        if flatten:
+            self._flatten()
         with open(filename, 'wb') as fp:
             pickle.dump(self, fp)
         
     @classmethod 
-    def from_file(cls, filename:str):
+    def from_file(cls, filename:str, expand:bool=True, sample_lib=None):
         """Loads a population from a pickled file.
 
         Parameters
         ----------
         filename : str
             Name of the population file.
-
+        expand : bool
+            Expands the samples from FlatSamples back to BaseSamples, provided a sample_lib is given.
+        sample_lib : SampleLibrary
+            If expand, provide the SampleLibrary from which to load the expanded sample.
         Returns
         -------
         Population
             The loaded population contained in the given file.
         """
         with open(filename, 'rb') as fp:
-            return pickle.load(fp)
+            obj = pickle.load(fp)
+            if expand and sample_lib is not None:
+                obj.expand(sample_lib)
+            
+            return obj
 
 class ArchiveRecord():
     def __init__(self, onset:int, fitness:float=None, individual:BaseIndividual=None) -> None:
