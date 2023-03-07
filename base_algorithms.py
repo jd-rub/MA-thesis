@@ -32,13 +32,13 @@ def base_algorithm_1plus1_single_onset(target_y:Union[np.ndarray, list], max_ste
     
     return best_individual
 
-def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_lib:SampleLibrary, popsize:int, n_offspring:int, onset_frac:float, mutator:Mutator=None, logger:PopulationLogger=None) -> Population:
+def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_lib:SampleLibrary, popsize:int, n_offspring:int, onset_frac:float, mutator:Mutator=None, logger:PopulationLogger=None, onsets:Union[np.ndarray, list]=None) -> Population:
     """Evolutionary approximation of a polyphonic musical piece
 
     Parameters
     ----------
     target_y : Union[np.ndarray, list]
-        signal of the target musical piece, as imported by librosa
+        Signal of the target musical piece, as imported by librosa
     max_steps : int
         Maximum number of iterations (generations) before termination
     sample_lib : SampleLibrary
@@ -53,6 +53,9 @@ def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_li
         Pre-initialized Mutator object that supports the mutate_individual(BaseIndividual) method
     logger: PopulationLogger
         Logging object, if desired. Can be None to omit logging
+    onsets : Union[np.ndarray, list], Optional
+        Positions of onsets (in samples) within the target piece. 
+        If not provided, they will be estimated by librosa.onset.onset_detect.
 
     Returns
     -------
@@ -62,7 +65,7 @@ def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_li
     # Initialization
     if mutator is None:
         mutator = Mutator(sample_lib) # Applies mutations and handles stft updates
-    target = Target(target_y)
+    target = Target(target_y, onsets)
 
     # Create initial population
     population = Population()
