@@ -38,7 +38,7 @@ class BaseIndividual:
         """Calculates the fitness of the len(samples)*phi best onsets.
         """
         n_onsets = int(np.ceil(len(self.fitness_per_onset) * self.phi)) # Number of onsets to include
-        partition_idx = np.argpartition(self.fitness_per_onset, n_onsets) # Indices of the included onsets
+        partition_idx = np.argpartition(self.fitness_per_onset, n_onsets-1) # Indices of the included onsets
         top_fitnesses = self.fitness_per_onset[partition_idx[:n_onsets]]
         self.fitness = np.mean(top_fitnesses) 
         self.recalc_fitness = False
