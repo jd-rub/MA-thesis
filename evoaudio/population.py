@@ -1,9 +1,10 @@
-from individual import BaseIndividual
-from base_sample import BaseSample, FlatSample
 import bisect
 import pickle
 from typing import Union
 import numpy as np
+
+from .individual import BaseIndividual
+from .base_sample import BaseSample, FlatSample
 
 class Population:
     individuals: list[BaseIndividual]

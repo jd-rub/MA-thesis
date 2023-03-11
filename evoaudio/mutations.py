@@ -1,6 +1,7 @@
 import numpy as np
-from individual import BaseIndividual
-from sample_library import SampleLibrary
+
+from .individual import BaseIndividual
+from .sample_library import SampleLibrary
 
 CHOOSE_MUTATION_P = [0.2, 0.4, 0.4]
 SAMPLE_NUMBER_INCREASE_P = [1, 0.8, 0.4, 0.1, 0] # for 1, 2, 3, 4 or 5 samples currently present

@@ -1,8 +1,9 @@
 import numpy as np
 import librosa
-from sample_library import SampleLibrary
-from base_sample import BaseSample
 from copy import copy
+
+from .sample_library import SampleLibrary
+from .base_sample import BaseSample
 
 INITIAL_N_SAMPLES_P = [0.1, 0.3, 0.3, 0.2, 0.1]
 

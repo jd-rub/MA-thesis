@@ -4,9 +4,10 @@ from glob import glob
 from tqdm import tqdm
 from tqdm.contrib.concurrent import thread_map
 import numpy as np
-from base_sample import BaseSample
-from instrument_info import InstrumentInfo
-from pitch import Pitch, DrumHit
+
+from .base_sample import BaseSample
+from .instrument_info import InstrumentInfo
+from .pitch import Pitch, DrumHit
 
 # TODO: Set instruments and styles in enum-style
 class SampleLibrary:
@@ -99,7 +100,7 @@ class SampleLibrary:
                 else:
                     instrument.pitches[style].add(pitch)                
             else:
-                self.instruments[instrument_name] = InstrumentInfo(name=instrument_name, styles={style}, pitches={style:{pitch}}, is_single_style=False)
+                self.instruments[instrument_name] = InstrumentInfo(name=instrument_name, styles={style}, pitches={style:{pitch}})
                 
             # Handle pitch by instrument mapping
             if pitch.value in self.known_instruments_by_pitch:

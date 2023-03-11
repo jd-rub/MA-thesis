@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from population import Population
+from .population import Population
 
 class PopulationLogger:
     def __init__(self) -> None:

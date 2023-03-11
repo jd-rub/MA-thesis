@@ -1,7 +1,8 @@
 import numpy as np
 import librosa
-from individual import BaseIndividual
-from target import Target
+
+from .individual import BaseIndividual
+from .target import Target
 
 def cosh_distance(stft_x, stft_y):
     a = np.average(abs(stft_x), axis=1)

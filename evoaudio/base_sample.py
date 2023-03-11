@@ -1,5 +1,7 @@
-from pitch import Pitch, DrumHit
 from typing import Union
+
+from .pitch import Pitch, DrumHit
+
 class BaseSample:
     def __init__(self, instrument, style, pitch:Union[Pitch, DrumHit], y, sr):
         self.instrument = instrument

@@ -1,13 +1,14 @@
-from sample_library import SampleLibrary
-from individual import BaseIndividual
-from mutations import Mutator
-from fitness import fitness, fitness_cached, multi_onset_fitness_cached
-from population import Population
-from population_logging import PopulationLogger
-from target import Target
 from typing import Union
 import numpy as np
 from tqdm import tqdm
+
+from .sample_library import SampleLibrary
+from .individual import BaseIndividual
+from .mutations import Mutator
+from .fitness import fitness, fitness_cached, multi_onset_fitness_cached
+from .population import Population
+from .population_logging import PopulationLogger
+from .target import Target
 
 MAX_SAMPLES_PER_ONSET = 5
 STOPPING_FITNESS = 0.001

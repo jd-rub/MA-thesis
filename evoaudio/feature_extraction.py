@@ -1,6 +1,7 @@
 import numpy as np
-from population import Population
-from sample_library import SampleLibrary
+
+from .population import Population
+from .sample_library import SampleLibrary
 
 def extract_features_for_window(pop: Population, lib: SampleLibrary, window_start: int, window_end: int) -> np.ndarray:
     ## Grab the onsets in those windows, and the associated best records from the population

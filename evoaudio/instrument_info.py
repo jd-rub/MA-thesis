@@ -1,6 +1,13 @@
-from pitch import Pitch
+from .pitch import Pitch
+
 class InstrumentInfo:
-    def __init__(self, name:str, styles:set, pitches:dict, is_single_style:bool):
+    name: str
+    styles: set[str]
+    pitches: dict[str, list[Pitch]]
+    min_pitches: dict[str, Pitch]
+    max_pitches: dict[str, Pitch]
+    
+    def __init__(self, name:str, styles:set, pitches:dict):
         self.name = name # Instrument name string
         self.styles = styles # Set of known instrument styles
         self.pitches = pitches # Dict of pairs {style: {B2, A2, Ais2, ...}}
