@@ -161,3 +161,17 @@ class Mutator:
         individual.samples[change_idx] = self.sample_library.get_sample(chosen_sample.instrument, chosen_sample.style, new_pitch)
 
         return individual
+    
+    def step_size_control(self, zeta:float):
+        """
+        Decrease std, mean and upper bound of the number of mutations applied 
+        by multiplying each by zeta.
+
+        Parameters
+        ----------
+        zeta: float
+            Step size control parameter 
+        """
+        self.alpha *= zeta
+        self.beta *= zeta
+        self.u_bound = np.clip(self.u_bound * zeta, a_min=self.l_bound, a_max=None)

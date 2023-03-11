@@ -13,29 +13,31 @@ from .target import Target
 MAX_SAMPLES_PER_ONSET = 5
 STOPPING_FITNESS = 0.001
 
-def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_lib:SampleLibrary, popsize:int, n_offspring:int, onset_frac:float, population:Population=None, mutator:Mutator=None, logger:PopulationLogger=None, onsets:Union[np.ndarray, list]=None, verbose:bool=True) -> Population:
+def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_lib:SampleLibrary, popsize:int, n_offspring:int, onset_frac:float, zeta:float=None, population:Population=None, mutator:Mutator=None, logger:PopulationLogger=None, onsets:Union[np.ndarray, list]=None, verbose:bool=True) -> Population:
     """Evolutionary approximation of a polyphonic musical piece
 
     Parameters
     ----------
     target_y : Union[np.ndarray, list]
-        Signal of the target musical piece, as imported by librosa
+        Signal of the target musical piece, as imported by librosa.
     max_steps : int
-        Maximum number of iterations (generations) before termination
+        Maximum number of iterations (generations) before termination.
     sample_lib : SampleLibrary
-        Library of samples which define the algorithm's search space
+        Library of samples which define the algorithm's search space.
     popsize : int
         Size of the population (µ)
     n_offspring : int
-        Number of offspring (λ) per generation 
+        Number of offspring (λ) per generation.
     onset_frac : float
-        Fraction of approximated onsets (φ) per individual
+        Fraction of approximated onsets (φ) per individual.
+    zeta : float, optional
+        Optional parameter for step size adaptation.
     population: Population, optional
-        Pre-initialized population object
+        Pre-initialized population object.
     mutator : Mutator, optional
-        Pre-initialized Mutator object that supports the mutate_individual(BaseIndividual) method
+        Pre-initialized Mutator object that supports the mutate_individual(BaseIndividual) method.
     logger: PopulationLogger, optional
-        Logging object, if desired. Can be None to omit logging
+        Logging object, if desired. Can be None to omit logging.
     onsets: Union[np.ndarray, list], optional
         Positions of onsets (in samples) within the target piece. 
         If not provided, they will be estimated by librosa.onset.onset_detect.
@@ -54,11 +56,11 @@ def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_li
 
     # Create initial population
     if population is None:
-        population = _init_population(sample_lib, target, onset_frac, popsize, verbose)
+        population = _init_population(sample_lib=sample_lib, target=target, onset_frac=onset_frac, popsize=popsize, verbose=verbose)
 
     # Evolutionary Loop
     for step in (pbar := tqdm(range(max_steps), disable=(not verbose))):
-        _step(population, target, n_offspring, mutator, logger, step)
+        _step(population=population, target=target, n_offspring=n_offspring, mutator=mutator, zeta=zeta, logger=logger, step=step)
         if verbose:
             # Update progress bar
             pbar.set_postfix_str(f"Best individual: {str(population.get_best_individual())}")
@@ -79,7 +81,7 @@ def _init_population(sample_lib:SampleLibrary, target:Target, onset_frac:float, 
     return population
 
 
-def _step(population:Population, target:Target, n_offspring:int, mutator:Mutator=None, logger:PopulationLogger=None, step:int=None):
+def _step(population:Population, target:Target, n_offspring:int, mutator:Mutator=None, zeta:float=None, logger:PopulationLogger=None, step:int=None):
     # Create lambda offspring
     parents = np.random.choice(population.individuals, size=n_offspring)
     offspring = [mutator.mutate_individual(BaseIndividual.from_copy(individual)) for individual in parents]
@@ -93,6 +95,10 @@ def _step(population:Population, target:Target, n_offspring:int, mutator:Mutator
     
     # Remove lambda worst individuals
     population.remove_worst(n_offspring)
+
+    # Step size adaptation
+    if zeta is not None:
+        mutator.step_size_control(zeta)
 
     if logger is not None:
         logger.log_population(population, step)
