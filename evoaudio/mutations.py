@@ -3,6 +3,7 @@ import numpy as np
 from .individual import BaseIndividual
 from .sample_library import SampleLibrary
 
+# Defaults from Vatolkin et. al (2020)
 CHOOSE_MUTATION_P = [0.2, 0.4, 0.4]
 SAMPLE_NUMBER_INCREASE_P = [1, 0.8, 0.4, 0.1, 0] # for 1, 2, 3, 4 or 5 samples currently present
 ALPHA = 6
@@ -45,14 +46,14 @@ class Mutator:
 
         Parameters
         ----------
-        individual : SampleCollection
+        individual : BaseIndividual
             Individual that shall be mutated. 
             Note that python uses references and if you wish to 
             preserve the original individual, then pass a copy of it to this method instead.
 
         Returns
         -------
-        SampleCollection
+        BaseIndividual
             Mutated individual.
         """
         # Draw number of mutation
@@ -74,12 +75,12 @@ class Mutator:
 
         Parameters
         ----------
-        sample_collection : SampleCollection
+        individual : BaseIndividual
             Individual that shall be mutated.
 
         Returns
         -------
-        SampleCollection
+        BaseIndividual
             The individual after the number of samples was changed.
         """
         pre_mutation_n_samples = len(individual.samples)
@@ -101,12 +102,12 @@ class Mutator:
 
         Parameters
         ----------
-        sample_collection : SampleCollection
+        individual : BaseIndividual
             Individual that shall be mutated.
 
         Returns
         -------
-        SampleCollection
+        BaseIndividual
             The individual after an instrument was changed.
 
         Raises
@@ -139,12 +140,12 @@ class Mutator:
 
         Parameters
         ----------
-        sample_collection : SampleCollection
+        individual : BaseIndividual
             Individual that shall be mutated.
 
         Returns
         -------
-        SampleCollection
+        BaseIndividual
             The individual after one of its samples' pitch was changed.
         """
         pre_mutation_n_samples = len(individual.samples)
