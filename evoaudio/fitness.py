@@ -76,4 +76,6 @@ def multi_onset_fitness_cached(target:Target, individual:BaseIndividual) -> np.n
             fitness = fitness_cached(individual, target_abs_stft)
             fitnesses.append(fitness)
             
-    return np.array(fitnesses)
+        return np.array(fitnesses)
+    else:
+        return individual.fitness_per_onset
