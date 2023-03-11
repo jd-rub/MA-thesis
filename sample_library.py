@@ -1,3 +1,4 @@
+from typing import Union
 import librosa
 from glob import glob
 from tqdm import tqdm
@@ -5,15 +6,22 @@ from tqdm.contrib.concurrent import thread_map
 import numpy as np
 from base_sample import BaseSample
 from instrument_info import InstrumentInfo
-from pitch import Pitch
+from pitch import Pitch, DrumHit
 
 # TODO: Set instruments and styles in enum-style
 class SampleLibrary:
+    instruments: dict[str, InstrumentInfo]
+    known_instruments_by_pitch: dict[int: (str, str)]
+    samples: dict[str: dict[str: dict[int: BaseSample]]] # Access as samples[instrument][style][pitch] -> BaseSample
+    
     def __init__(self, path='./audio/StructuredSamples/'):
         self.instruments = dict() # Holds Name: InstrumentInfo pairs of the known instruments
         self.known_instruments_by_pitch = dict() # Holds lists of valid instruments+styles for a given pitch
         self.samples = dict()
+        self._init_samples = []
         self.load_samples_multithreaded(path=path, n_threads=8)
+        # self.load_samples_single_thread(path)
+        self.create_sample_dict()
         self.extract_instrument_info()
         pass
 
@@ -28,7 +36,7 @@ class SampleLibrary:
             Number of threads with which to load the files for better performance.
         """
         wav_files = glob(path + "**/*.wav", recursive=True)
-        wav_files = [file for file in wav_files if "Drums" not in file]
+        # wav_files = [file for file in wav_files if "Drums" not in file]
         thread_map(self.load_file, wav_files, max_workers=n_threads, chunksize=len(wav_files)//n_threads//10, desc="Loading samples")
     
     def load_file(self, path:str) -> None:
@@ -47,36 +55,18 @@ class SampleLibrary:
         style, tail = tail.split("\\")[-2:]
         pitch_str = tail.split("_")[-1].split(".")[0].lower()
 
-        pitch = Pitch[pitch_str]
+        # Separate drum handling
+        if instrument_name == "Drums":
+            for hit in DrumHit:
+                if hit.name + ".wav" in path:
+                    pitch = hit
+                    break
+        else:
+            pitch = Pitch[pitch_str]
 
         sample = BaseSample(instrument=instrument_name, style=style, pitch=pitch, y=y, sr=sr)
 
-        if instrument_name in self.instruments:
-            instrument = self.instruments[instrument_name]
-            # Handle style
-            if style not in instrument.styles:
-                instrument.styles.add(style)
-                instrument.pitches[style] = {pitch}
-            else:
-                instrument.pitches[style].add(pitch)
-            # Handle pitch by instrument mapping
-            if pitch in self.known_instruments_by_pitch:
-                self.known_instruments_by_pitch[pitch].add((instrument_name, style))
-            else:
-                self.known_instruments_by_pitch[pitch] = {(instrument_name, style)}
-            
-        else:
-            self.instruments[instrument_name] = InstrumentInfo(name=instrument_name, styles={style}, pitches={style:{pitch}}, is_single_style=False)
-            self.known_instruments_by_pitch[pitch] = {(instrument_name, style)}
-
-        # Save in sample dictionary
-        if instrument_name not in self.samples:
-            self.samples[instrument_name] = {style: {pitch: sample}}
-        else:
-            if style not in self.samples[instrument_name]:
-                self.samples[instrument_name][style] = {pitch: sample}
-            else:
-                self.samples[instrument_name][style][pitch] = sample
+        self._init_samples.append(sample)
 
     def load_samples_single_thread(self, path:str) -> None:
         """Loads all samples in the subfolders of path in a single thread.
@@ -87,35 +77,47 @@ class SampleLibrary:
             Path to the sample library.
         """
         wav_files = glob(path + "**/*.wav", recursive=True)
-        instrument_names = set()
-        samples = dict()
-
         for file in tqdm(wav_files):
-            y = librosa.load(file)
-
-            # Get instrument name, style and note from file path
-            instrument_name, tail = file.split(
-                "ForMixing\\")[1].split("\\", maxsplit=1)
-            instrument_names.add(instrument_name)
-            style, tail = tail.split("\\")[-2:]
-            note = tail.split("_")[-1].split(".")[0]
-
-            # Save in sample dictionary
-            if instrument_name not in samples:
-                samples[instrument_name] = {style: {note: y}}
-            else:
-                if style not in samples[instrument_name]:
-                    samples[instrument_name][style] = {note: y}
-                else:
-                    samples[instrument_name][style][note] = y
-        self.instruments = instrument_names
-        self.samples = samples
+            self.load_file(file)
 
     def extract_instrument_info(self):
         for instrument in self.instruments.values():
             instrument.calc_min_max_pitches()
 
-    def get_sample(self, instrument:str, style:str, pitch:Pitch) -> BaseSample:
+    def create_sample_dict(self):
+        for sample in self._init_samples:
+            instrument_name = sample.instrument
+            style = sample.style
+            pitch = sample.pitch
+
+            if instrument_name in self.instruments:
+                instrument = self.instruments[instrument_name]
+                # Handle style
+                if style not in instrument.styles:
+                    instrument.styles.add(style)
+                    instrument.pitches[style] = {pitch}
+                else:
+                    instrument.pitches[style].add(pitch)                
+            else:
+                self.instruments[instrument_name] = InstrumentInfo(name=instrument_name, styles={style}, pitches={style:{pitch}}, is_single_style=False)
+                
+            # Handle pitch by instrument mapping
+            if pitch.value in self.known_instruments_by_pitch:
+                self.known_instruments_by_pitch[pitch.value].add((instrument_name, style))
+            else:
+                self.known_instruments_by_pitch[pitch.value] = {(instrument_name, style)}
+
+            # Save in sample dictionary
+            if instrument_name not in self.samples:
+                self.samples[instrument_name] = {style: {pitch.value: sample}}
+            else:
+                if style not in self.samples[instrument_name]:
+                    self.samples[instrument_name][style] = {pitch.value: sample}
+                else:
+                    self.samples[instrument_name][style][pitch.value] = sample
+        self._init_samples = None
+
+    def get_sample(self, instrument:str, style:str, pitch:Union[Pitch, DrumHit]) -> BaseSample:
         """Returns the audio of a sample.
 
         Parameters
@@ -159,7 +161,7 @@ class SampleLibrary:
         pitch = np.random.choice(list(instrument.pitches[style]))
         return self.get_sample(instrument.name, style, pitch)
 
-    def get_random_instrument_for_pitch(self, pitch:Pitch) -> str:
+    def get_random_instrument_for_pitch(self, pitch:Union[Pitch, DrumHit]) -> str:
         """Helper function to draw a random instrument that is valid for the provided pitch.
 
         Parameters

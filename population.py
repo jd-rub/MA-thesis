@@ -6,6 +6,9 @@ from typing import Union
 import numpy as np
 
 class Population:
+    individuals: list[BaseIndividual]
+    archive: dict[int, BaseIndividual]
+    
     def __init__(self) -> None:
         self.individuals = [] # List of BaseIndividuals, Sorted by fitness values
         self.archive = {} # Dict of onset: SampleCollection # TODO: Refactor and expand archive to hold records for each instrument

@@ -1,7 +1,7 @@
 from sample_library import SampleLibrary
 from individual import BaseIndividual
 from mutations import Mutator
-from fitness import fitness, multi_onset_fitness_cached
+from fitness import fitness, fitness_cached, multi_onset_fitness_cached
 from population import Population
 from population_logging import PopulationLogger
 from target import Target
@@ -31,6 +31,41 @@ def base_algorithm_1plus1_single_onset(target_y:Union[np.ndarray, list], max_ste
             break
     
     return best_individual
+
+def approximate_single_onset(target_y:Union[np.ndarray, list], max_steps:int, sample_lib:SampleLibrary, popsize:int, n_offspring:int, onset_start:int, onset_end:int, mutator:Mutator=None, logger:PopulationLogger=None) -> Population:
+    if mutator is None:
+        mutator = Mutator(sample_lib)
+    target = Target(target_y[onset_start:onset_end], onsets=[0])
+
+    # Create initial population
+    population = Population()
+    population.individuals = [BaseIndividual.create_random_individual(sample_lib=sample_lib, phi=1) for _ in tqdm(range(popsize), desc="Initializing Population")]
+    for individual in tqdm(population.individuals, desc="Calculating initial fitness"):
+        individual.fitness = fitness_cached(individual, target.abs_stft_per_snippet[0])
+    population.sort_individuals_by_fitness() # Sort population for easier management
+
+    # Evolutionary Loop
+    for step in (pbar := tqdm(range(max_steps))):
+        # Create lambda offspring
+        parents = np.random.choice(population.individuals, size=n_offspring)
+        offspring = [mutator.mutate_individual(BaseIndividual.from_copy(individual)) for individual in parents]
+
+        # Evaluate fitness of offspring
+        for individual in offspring:
+            individual.fitness = fitness_cached(individual, target.abs_stft_per_snippet[0])
+            individual.fitness_per_onset = [individual.fitness]
+            # Insert individual into population
+            population.insert_individual(individual)
+        
+        # Remove lambda worst individuals
+        population.remove_worst(n_offspring)
+
+        # Update progress bar
+        pbar.set_postfix_str(f"Best individual: {str(population.get_best_individual())}")
+        if logger:
+            logger.log_population(population, step)
+
+    return population
 
 def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_lib:SampleLibrary, popsize:int, n_offspring:int, onset_frac:float, mutator:Mutator=None, logger:PopulationLogger=None, onsets:Union[np.ndarray, list]=None) -> Population:
     """Evolutionary approximation of a polyphonic musical piece

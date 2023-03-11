@@ -2,3 +2,4 @@ __pycache__
 audio
 MA Reading
 *.wav
+*.pkl

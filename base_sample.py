@@ -1,6 +1,7 @@
-from pitch import Pitch
+from pitch import Pitch, DrumHit
+from typing import Union
 class BaseSample:
-    def __init__(self, instrument, style, pitch:Pitch, y, sr):
+    def __init__(self, instrument, style, pitch:Union[Pitch, DrumHit], y, sr):
         self.instrument = instrument
         self.style = style
         self.pitch = pitch
@@ -14,7 +15,7 @@ class BaseSample:
         return self.y
 
 class FlatSample(BaseSample):
-    def __init__(self, instrument, style, pitch: Pitch, y=None, sr=None):
+    def __init__(self, instrument, style, pitch:Union[Pitch, DrumHit], y=None, sr=None):
         super().__init__(instrument, style, pitch, y = None, sr = None)
     
     def expand(self, sample_lib) -> BaseSample:

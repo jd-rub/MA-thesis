@@ -90,3 +90,34 @@ class Pitch(IntEnum):
     ais7 = 106
     b7 = 107
     c8 = 108
+
+class DrumHit(IntEnum):
+    Kick1 = 36
+    Snare_Sidestick = 37
+    Snare_Center = 38
+    Snare_Rimshot = 39
+    Snare_Halfway = 40
+    Tom4 = 41
+    Hihat_Closed = 42
+    Tom3 = 43
+    Hihat_Closed_Pedal = 44
+    Tom2 = 45
+    Hihat_Open = 46
+    Tom1 = 47
+    Crash1_Tip = 48
+    Crash1_Edge = 49
+    Crash1_Bell = 50
+    Ride_Tip = 51
+    Ride_Edge = 52
+    Ride_Bell = 53
+    Crash2_Tip = 54
+    Crash2_Edge = 55
+    Crash2_Bell = 56
+    FXCymbal1 = 57
+    FXCymbal2 = 58
+    FXCymbal3 = 59
+    Kick2 = 60
+    Snare_RimOnly = 61
+    Snare_Flam = 62
+    Snare_Roll = 63
+    Snare_WiresOff = 64
