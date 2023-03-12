@@ -108,7 +108,8 @@ def _step(population:Population, target:Target, n_offspring:int, mutator:Mutator
         logger.log_population(population, step)
     
     # Early stopping
-    if population.get_best_individual().fitness <= early_stopping_fitness:
+    if (early_stopping_fitness is not None 
+        and population.get_best_individual().fitness <= early_stopping_fitness):
         return True
     else:
         return False
