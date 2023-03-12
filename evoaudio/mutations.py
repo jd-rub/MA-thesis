@@ -10,9 +10,16 @@ ALPHA = 6
 BETA = 3
 L_BOUND = 1
 U_BOUND = 10
+PITCH_SHIFT_STD = 6
 
 class Mutator:
-    def __init__(self, sample_library:SampleLibrary, alpha:int=ALPHA, beta:int=BETA, l_bound:int=L_BOUND, u_bound:int=U_BOUND, sample_number_increase_p:list[float]=SAMPLE_NUMBER_INCREASE_P, choose_mutation_p:list[float]=CHOOSE_MUTATION_P):
+    def __init__(self, 
+                 sample_library:SampleLibrary, 
+                 alpha:int=ALPHA, beta:int=BETA, 
+                 l_bound:int=L_BOUND, u_bound:int=U_BOUND, 
+                 sample_number_increase_p:list[float]=SAMPLE_NUMBER_INCREASE_P, 
+                 pitch_shift_std:float=PITCH_SHIFT_STD, 
+                 choose_mutation_p:list[float]=CHOOSE_MUTATION_P):
         """Creates an instance of the Mutator class.
 
         Parameters
@@ -30,6 +37,8 @@ class Mutator:
         sample_number_increase_p : list[float], optional
             Probabilites of increasing the number of samples if 
             the mutate_n_samples mutation is chosen, by default SAMPLE_NUMBER_INCREASE_P
+        pitch_shift_std : float, optional
+            Standard deviation of a pitch shift mutation. by default PITCH_SHIFT_STD
         choose_mutation_p : list[float], optional
             Probabilities of each mutation to be applied, by default CHOOSE_MUTATION_P
         """
@@ -39,6 +48,7 @@ class Mutator:
         self.l_bound = l_bound
         self.u_bound = u_bound
         self.sample_number_increase_p = sample_number_increase_p
+        self.pitch_shift_std = pitch_shift_std
         self.choose_mutation_p = choose_mutation_p
 
     def mutate_individual(self, individual:BaseIndividual) -> BaseIndividual:
@@ -156,7 +166,7 @@ class Mutator:
         
         # Choose a new pitch
         #new_pitch = self.sample_library.get_random_pitch_for_instrument_uniform(chosen_sample.instrument, chosen_sample.style)
-        shift_by = np.round(np.random.normal(loc=0, scale=6))
+        shift_by = np.round(np.random.normal(loc=0, scale=self.pitch_shift_std))
         new_pitch = self.sample_library.get_shifted_pitch(chosen_sample.instrument, chosen_sample.style, chosen_sample.pitch, shift_by)
         individual.samples[change_idx] = self.sample_library.get_sample(chosen_sample.instrument, chosen_sample.style, new_pitch)
 

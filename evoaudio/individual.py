@@ -1,6 +1,7 @@
+from copy import copy
+
 import numpy as np
 import librosa
-from copy import copy
 
 from .sample_library import SampleLibrary
 from .base_sample import BaseSample

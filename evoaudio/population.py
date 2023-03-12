@@ -1,6 +1,7 @@
 import bisect
 import pickle
 from typing import Union
+
 import numpy as np
 
 from .individual import BaseIndividual

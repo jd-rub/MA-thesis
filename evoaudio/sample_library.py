@@ -1,9 +1,10 @@
-from typing import Union
-import librosa
 from glob import glob
+from typing import Union
+
+import librosa
+import numpy as np
 from tqdm import tqdm
 from tqdm.contrib.concurrent import thread_map
-import numpy as np
 
 from .base_sample import BaseSample
 from .instrument_info import InstrumentInfo
