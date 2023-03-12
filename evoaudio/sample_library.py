@@ -118,16 +118,16 @@ class SampleLibrary:
                     self.samples[instrument_name][style][pitch.value] = sample
         self._init_samples = None
 
-    def get_sample(self, instrument:str, style:str, pitch:Union[Pitch, DrumHit]) -> BaseSample:
+    def get_sample(self, instrument:str, style:str=None, pitch:Union[Pitch, DrumHit]=Pitch.c4) -> BaseSample:
         """Returns the audio of a sample.
 
         Parameters
         ----------
         instrument : str
             Name of the instrument
-        style : str
-            Name of the instrument style
-        pitch : str
+        style : str, optional
+            Name of the instrument style. A random style is chosen if None.
+        pitch : Pitch, default = Pitch.c4
             Pitch of the sample
 
         Returns
@@ -140,10 +140,11 @@ class SampleLibrary:
         KeyError
             If the desired sample is not contained in the library.
         """
+        if style is None:
+            style = self.get_random_style_for_instrument(instrument_name=instrument)
         try: 
             return self.samples[instrument][style][pitch]
         except:
-            print(f"Could not find sample: {instrument}, {style}, {pitch}")
             raise KeyError()
 
     def get_random_sample_uniform(self) -> BaseSample:
@@ -203,14 +204,15 @@ class SampleLibrary:
         else:
             raise ValueError(f"Instrument '{instrument_name}' not found in sample library.")
 
-    def get_random_pitch_for_instrument_uniform(self, instrument_name:str, style:str) -> Pitch: 
+    def get_random_pitch_for_instrument_uniform(self, instrument_name:str, style:str=None) -> Pitch: 
         """Helper function to draw a uniform random pitch for a given instrument and style.
+        If no style is given, a random style is chosen for the instrument.
 
         Parameters
         ----------
         instrument_name : str
             Desired instrument that the pitch must be valid for.
-        style : str
+        style : str, optional
             Desired style that the pitch must be valid for.
 
         Returns
@@ -223,6 +225,8 @@ class SampleLibrary:
         ValueError
             If instrument is not known to the library, or the style is not valid for the instrument.
         """
+        if style is None:
+            style = self.get_random_style_for_instrument(instrument_name=instrument_name)
         if instrument_name in self.instruments:
             instr_info = self.instruments[instrument_name]
             if style in instr_info.pitches:
