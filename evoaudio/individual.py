@@ -28,10 +28,18 @@ class BaseIndividual:
         s = f"Fitness: {self.fitness} | " + ", ".join(str(x) for x in self.samples)
         return s
 
+    # def calc_abs_stft(self) -> None:
+    #     """Calculates the absolute stft values of the sample mix.
+    #     """
+    #     stft = librosa.stft(self.to_mixdown())
+    #     self.abs_stft = np.abs(stft)
+    #     self.recalc_fitness = True
+
     def calc_abs_stft(self) -> None:
+        # Version with 1-second snippets (Ginsel et. al 2022)
         """Calculates the absolute stft values of the sample mix.
         """
-        stft = librosa.stft(self.to_mixdown())
+        stft = librosa.stft(self.to_mixdown()[:22050])
         self.abs_stft = np.abs(stft)
         self.recalc_fitness = True
 

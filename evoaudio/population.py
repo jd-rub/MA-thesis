@@ -80,6 +80,9 @@ class Population:
         for individual in self.individuals:
             for i, sample in enumerate(individual.samples):
                 individual.samples[i] = FlatSample(sample.instrument, sample.style, sample.pitch)
+        for individual in self.archive.values():
+            for i, sample in enumerate(individual.samples):
+                individual.samples[i] = FlatSample(sample.instrument, sample.style, sample.pitch)
 
     def _expand(self, sample_lib):
         """Expands a flattened population by reloading the included samples from the sample library.
@@ -90,6 +93,9 @@ class Population:
             Initialized sample library from which to load the samples in this population.
         """
         for individual in self.individuals:
+            for i, sample in enumerate(individual.samples):
+                individual.samples[i] = sample_lib.get_sample(sample.instrument, sample.style, sample.pitch)
+        for individual in self.archive.values():
             for i, sample in enumerate(individual.samples):
                 individual.samples[i] = sample_lib.get_sample(sample.instrument, sample.style, sample.pitch)
 

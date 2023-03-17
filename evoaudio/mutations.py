@@ -10,7 +10,7 @@ ALPHA = 6
 BETA = 3
 L_BOUND = 1
 U_BOUND = 10
-PITCH_SHIFT_STD = 6
+PITCH_SHIFT_STD = 15
 
 class Mutator:
     def __init__(self, 
@@ -166,7 +166,7 @@ class Mutator:
         
         # Choose a new pitch
         #new_pitch = self.sample_library.get_random_pitch_for_instrument_uniform(chosen_sample.instrument, chosen_sample.style)
-        shift_by = np.round(np.random.normal(loc=0, scale=self.pitch_shift_std))
+        shift_by = np.floor(np.random.normal(loc=0, scale=self.pitch_shift_std))
         new_pitch = self.sample_library.get_shifted_pitch(chosen_sample.instrument, chosen_sample.style, chosen_sample.pitch, shift_by)
         individual.samples[change_idx] = self.sample_library.get_sample(chosen_sample.instrument, chosen_sample.style, new_pitch)
 
