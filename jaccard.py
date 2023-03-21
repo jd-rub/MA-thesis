@@ -1,3 +1,4 @@
+from csv import DictWriter
 from enum import Enum
 from glob import glob
 import os
@@ -109,3 +110,73 @@ def calc_jaccard_for_chord_approximation(pop:Population, annotation:list[tuple]
     j_ip = jaccard_error(pop, {0: annotation}, class_mode.COMBINED)
 
     return j_i, j_p, j_ip
+
+
+def jaccard_results_to_csv(filename, errors, popsize, n_offspring, max_steps, 
+    alpha, beta, l_bound, u_bound,
+    zeta, pitch_shift_std, n_runs):
+    # Calculate error statistics
+    j_i = np.mean([tup[0] for tup in errors])
+    j_p = np.mean([tup[1] for tup in errors])
+    j_ip = np.mean([tup[2] for tup in errors])
+
+    j_i_std = np.std([tup[0] for tup in errors])
+    j_p_std = np.std([tup[1] for tup in errors])
+    j_ip_std = np.std([tup[2] for tup in errors])
+
+    j_i_per_run = []
+    j_p_per_run = []
+    j_ip_per_run = []
+    n = 10
+
+    for i in range(0, len(errors), n):
+        j_i_per_run.append(np.mean([tup[0] for tup in errors[i:i+n]]))
+        j_p_per_run.append(np.mean([tup[1] for tup in errors[i:i+n]]))
+        j_ip_per_run.append(np.mean([tup[2] for tup in errors[i:i+n]]))
+
+    j_i_median = np.median(j_i_per_run)
+    j_p_median = np.median(j_p_per_run)
+    j_ip_median = np.median(j_ip_per_run)
+
+    j_i_min = np.min(j_i_per_run)
+    j_p_min = np.min(j_p_per_run)
+    j_ip_min = np.min(j_ip_per_run)
+
+    j_i_max = np.max(j_i_per_run)
+    j_p_max = np.max(j_p_per_run)
+    j_ip_max = np.max(j_ip_per_run)
+
+    # Save to .csv
+    field_names = ["POPSIZE", "N_OFFSPRING", "MAX_STEPS", "ALPHA", "BETA",
+                    "L_BOUND", "U_BOUND", "ZETA", "PITCH_SHIFT_STD", "N_RUNS",
+                    "j_i", "j_i_std", "j_i_median", "j_i_min", "j_i_max", 
+                    "j_p", "j_p_std", "j_p_median", "j_p_min", "j_p_max", 
+                    "j_ip", "j_ip_std", "j_ip_median", "j_ip_min", "j_ip_max",]
+
+    row = {"POPSIZE": popsize, "N_OFFSPRING": n_offspring, "MAX_STEPS": max_steps, 
+    "ALPHA": alpha, "BETA": beta, "L_BOUND": l_bound, "U_BOUND": u_bound,
+    "ZETA": zeta, "PITCH_SHIFT_STD": pitch_shift_std, "N_RUNS": n_runs,
+    "j_i": j_i, "j_i_std": j_i_std, "j_i_median": j_i_median, "j_i_min": j_i_min, "j_i_max": j_i_max,
+    "j_p": j_p, "j_p_std": j_p_std, "j_p_median": j_p_median, "j_p_min": j_p_min, "j_p_max": j_p_max,
+    "j_ip": j_ip, "j_ip_std": j_ip_std, "j_ip_median": j_ip_median, "j_ip_min": j_ip_min, "j_ip_max": j_ip_max}
+
+    print("Chord approximation results for parameters:")
+    print(f"""POPSIZE = {popsize},
+N_OFFSPRING = {n_offspring},
+MAX_STEPS = {max_steps},
+ALPHA = {alpha},
+BETA = {beta},
+L_BOUND = {l_bound},
+U_BOUND = {u_bound},
+ZETA = {zeta},
+PITCH_SHIFT_STD = {pitch_shift_std},
+N_RUNS = {n_runs}
+------------------
+Errors:""")
+    print(f"Mean: j_i={j_i}, j_p={j_p}, j_ip={j_ip}")
+    print(f"Std: j_i={j_i_std}, j_p={j_p_std}, j_ip={j_ip_std}")
+
+    with open(filename, 'a') as f:
+        writer = DictWriter(f, fieldnames=field_names)
+        writer.writerow(row)
+        f.close()
