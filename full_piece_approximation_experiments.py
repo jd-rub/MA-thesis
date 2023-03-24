@@ -15,7 +15,7 @@ from evoaudio.mutations import Mutator
 from evoaudio.pitch import Pitch
 from evoaudio.individual import BaseIndividual
 from evoaudio.fitness import fitness
-from jaccard import calc_jaccard_for_chord_approximation
+from jaccard import calc_jaccard_for_chord_approximation, jaccard_results_to_csv
 
 RESULT_FOLDER = "./experiments/tiny_aam/"
 
@@ -62,25 +62,7 @@ def run_experiment(annotations, target_mixes, sample_lib:SampleLibrary, run_id, 
         result.save_as_file(RESULT_FOLDER + PARAM_STR + "/" + f"{run_id + proc_id}/" + name + ".pkl")
         results[name] = result
     
-# def result_to_csv(j_i, j_i_std, j_p, j_p_std, j_ip, j_ip_std):
-#     field_names = ["POPSIZE", "N_OFFSPRING", "MAX_STEPS", "ONSET_FRAC", "ALPHA", "BETA",
-#                     "L_BOUND", "U_BOUND", "ZETA", "PITCH_SHIFT_STD", "N_RUNS",
-#                     "j_i", "j_i_std", "j_p", "j_p_std", "j_ip", "j_ip_std"]
-#     row = {"POPSIZE": POPSIZE, "N_OFFSPRING": N_OFFSPRING, "MAX_STEPS": MAX_STEPS, "ONSET_FRAC": ONSET_FRAC,
-#     "ALPHA": ALPHA, "BETA": BETA, "L_BOUND": L_BOUND, "U_BOUND": U_BOUND,
-#     "ZETA": ZETA, "PITCH_SHIFT_STD": PITCH_SHIFT_STD, "N_RUNS": N_RUNS,
-#     "j_i": j_i, "j_i_std": j_i_std, "j_p": j_p, "j_p_std": j_p_std, 
-#     "j_ip": j_ip, "j_ip_std": j_ip_std}
-
-#     with open(RESULT_CSV, 'a') as f:
-#         writer = DictWriter(f, fieldnames=field_names)
-#         writer.writerow(row)
-#         f.close()
-
 if __name__ == "__main__":
-    # manager = Manager()
-    # errors = manager.list()
-
     LibraryManager.register('SampleLibrary', SampleLibrary)
     with LibraryManager() as manager:
         shared_lib = manager.SampleLibrary()
@@ -99,28 +81,7 @@ if __name__ == "__main__":
             finished_runs += n_processes
             print(f"Finished {finished_runs} runs.")
     
-    # j_i = np.mean([tup[0] for tup in errors])
-    # j_p = np.mean([tup[1] for tup in errors])
-    # j_ip = np.mean([tup[2] for tup in errors])
-
-    # j_i_std = np.std([tup[0] for tup in errors])
-    # j_p_std = np.std([tup[1] for tup in errors])
-    # j_ip_std = np.std([tup[2] for tup in errors])
-
-#     print("Chord approximation results for parameters:")
-#     print(f"""POPSIZE = {POPSIZE},
-# N_OFFSPRING = {N_OFFSPRING},
-# MAX_STEPS = {MAX_STEPS},
-# ONSET_FRAC = {ONSET_FRAC},
-# ALPHA = {ALPHA},
-# BETA = {BETA},
-# L_BOUND = {L_BOUND},
-# U_BOUND = {U_BOUND},
-# ZETA = {ZETA},
-# PITCH_SHIFT_STD = {PITCH_SHIFT_STD},
-# N_RUNS = {N_RUNS}
-# ------------------
-# Errors:""")
-#     print(f"Mean: j_i={j_i}, j_p={j_p}, j_ip={j_ip}")
-#     print(f"Std: j_i={j_i_std}, j_p={j_p_std}, j_ip={j_ip_std}")
-#     result_to_csv(j_i=j_i, j_i_std=j_i_std, j_p=j_p, j_p_std=j_p_std, j_ip=j_ip, j_ip_std=j_ip_std)
+    # result_csv = RESULT_FOLDER + PARAM_STR
+    # jaccard_results_to_csv(filename=result_csv, errors=errors, popsize=POPSIZE, n_offspring=N_OFFSPRING, max_steps=MAX_STEPS,
+    #                 alpha=ALPHA, beta=BETA, l_bound=L_BOUND, u_bound=U_BOUND,
+    #                 zeta=ZETA, pitch_shift_std=PITCH_SHIFT_STD, n_runs=N_RUNS)
