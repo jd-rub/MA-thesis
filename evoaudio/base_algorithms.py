@@ -11,7 +11,26 @@ from .population import Population
 from .population_logging import PopulationLogger
 from .target import Target
 
-def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, sample_lib:SampleLibrary, popsize:int, n_offspring:int, onset_frac:float, zeta:float=None, early_stopping_fitness:float=None, population:Population=None, mutator:Mutator=None, logger:PopulationLogger=None, onsets:Union[np.ndarray, list]=None, verbose:bool=True) -> Population:
+def approximate_piece_per_onset(target_y:Union[np.ndarray, list], max_steps:int, 
+                                sample_lib:SampleLibrary, popsize:int, n_offspring:int, 
+                                zeta:float=None, early_stopping_fitness:float=None, 
+                                population:Population=None, mutator:Mutator=None, 
+                                logger:PopulationLogger=None, onsets:Union[np.ndarray, list]=None, 
+                                verbose:bool=True
+                                ) -> Population:
+    # WARNING: THIS TAKES FOREVER RIGHT NOW, DO NOT USE!
+    pop = Population()
+    for onset in onsets:
+        result = approximate_piece(target_y=target_y, max_steps=max_steps, sample_lib=sample_lib, popsize=popsize, n_offspring=n_offspring, zeta=zeta, onset_frac=1, early_stopping_fitness=early_stopping_fitness, population=population, mutator=mutator, logger=logger, onsets=[onset], verbose=verbose)
+        pop.merge_populations(result)
+    return pop
+
+def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int, 
+                      sample_lib:SampleLibrary, popsize:int, n_offspring:int, 
+                      onset_frac:float, zeta:float=None, early_stopping_fitness:float=None, 
+                      population:Population=None, mutator:Mutator=None, logger:PopulationLogger=None, 
+                      onsets:Union[np.ndarray, list]=None, verbose:bool=True
+                      ) -> Population:
     """Evolutionary approximation of a polyphonic musical piece.
 
     Parameters

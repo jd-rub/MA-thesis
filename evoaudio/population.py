@@ -1,3 +1,4 @@
+from __future__ import annotations
 import bisect
 import pickle
 from typing import Union
@@ -9,7 +10,7 @@ from .base_sample import BaseSample, FlatSample
 
 class Population:
     individuals: list[BaseIndividual]
-    archive: dict[int, BaseIndividual]
+    archive: dict[int, ArchiveRecord]
     
     def __init__(self) -> None:
         self.individuals = [] # List of BaseIndividuals, Sorted by fitness values
@@ -73,6 +74,38 @@ class Population:
             Individual with the highest fitness
         """
         return self.individuals[0]
+    
+    def merge_populations(self, other_pop:Population):
+        """Merges this population with another, taking into account mismatches in the approximated onsets.
+
+        Parameters
+        ----------
+        other_pop : Population
+            The other population to merge with.
+
+        Returns
+        -------
+        bool
+            True if merge was successful and no mismatch was detected. 
+            False if an onset mismatch was detected. 
+            In that case it is recommended to recalculate the 
+            fitness for all individuals with recalc_fitness == True.
+        """
+        # Update records
+        onset_mismatch = False
+        for onset, record in other_pop.archive.items():
+            if onset in self.archive:
+                if record.fitness < self.archive[onset].fitness:
+                    self.archive[onset] = record
+            else: 
+                self.archive[onset] = record
+                onset_mismatch = True
+        # Merge individual list
+        for individual in other_pop.individuals:
+            individual.recalc_fitness = True
+        self.individuals += other_pop.individuals
+
+        return not onset_mismatch
     
     def _flatten(self):
         """Flattens the population to reduce disk space usage.
