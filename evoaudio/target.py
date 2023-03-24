@@ -5,13 +5,21 @@ class Target():
     def __init__(self, y, onsets=None) -> None:
         self.y = y
         if onsets is None:
-            self.onsets = librosa.onset.onset_detect(y=y, units="samples")
+            # self.onsets = librosa.onset.onset_detect(y=y, units="samples")
+            self.onsets = self.detect_onsets()
         else:
             self.onsets = onsets
         # self.stft_per_snippet = self.calc_stft_for_snippets() # Dict with onset: stft pairs
-        self.stft_per_snippet = self.calc_stft_for_snippets_1sec() # Dict with onset: stft pairs
+        self.stft_per_snippet = self.calc_stft_for_snippets_adaptive() # Dict with onset: stft pairs
         self.abs_stft_per_snippet = {onset: np.abs(self.stft_per_snippet[onset]) for onset in self.onsets}
     
+    def detect_onsets(self):
+        y = librosa.resample(y=self.y, orig_sr=22050, target_sr=11025)
+        onset_frames = librosa.onset.onset_detect(y=y, units='frames')
+        oenv = librosa.onset.onset_strength(y=y)
+        backtracked_onset_frames = librosa.onset.onset_backtrack(onset_frames, oenv)
+        return librosa.frames_to_samples(backtracked_onset_frames, sr=11025)
+
     def calc_stft_for_snippets(self):
         stft_per_snippet = dict()
         for i, onset in enumerate(self.onsets):
@@ -25,12 +33,13 @@ class Target():
                 stft_per_snippet[onset] = librosa.stft(snippet)
         return stft_per_snippet
 
-    def calc_stft_for_snippets_1sec(self):
-        # Version with 1-second long snippets (Ginsel et. al. 2022)
+    def calc_stft_for_snippets_adaptive(self):
+        # Version with snippets of length min(onset_n-1 - onset_n, 1, len(song) - onset_n)
         stft_per_snippet = dict()
-        for onset in self.onsets:
-            outset = onset + 22050
-            if outset > len(self.y):
-                outset = len(self.y) - 1
+        for i, onset in enumerate(self.onsets[:-1]):
+            outset = int(min(self.onsets[i+1], onset + 22050))
             stft_per_snippet[onset] = librosa.stft(self.y[onset:outset])
+        # Final onset
+        final_onset = self.onsets[-1]
+        stft_per_snippet[final_onset] = librosa.stft(self.y[final_onset:(final_onset+int(min(len(self.y) - final_onset, final_onset + 22050)))])
         return stft_per_snippet
