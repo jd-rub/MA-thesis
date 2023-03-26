@@ -4,7 +4,8 @@ from .individual import BaseIndividual
 from .sample_library import SampleLibrary
 
 # Defaults from Vatolkin et. al (2020)
-CHOOSE_MUTATION_P = [0.2, 0.4, 0.4]
+# CHOOSE_MUTATION_P = [0.2, 0.4, 0.4]
+CHOOSE_MUTATION_P = [0.15, 0.35, 0.4, 0.1] # Including Loudness mutation
 SAMPLE_NUMBER_INCREASE_P = [1, 0.8, 0.4, 0.1, 0] # for 1, 2, 3, 4 or 5 samples currently present
 ALPHA = 6
 BETA = 3
@@ -71,7 +72,8 @@ class Mutator:
 
         for _ in range(n_mutations):
             # Decide which mutation to apply
-            mutation = np.random.choice([self.mutate_n_samples, self.mutate_instrument, self.mutate_pitch], p=self.choose_mutation_p)
+            # mutation = np.random.choice([self.mutate_n_samples, self.mutate_instrument, self.mutate_pitch], p=self.choose_mutation_p)
+            mutation = np.random.choice([self.mutate_n_samples, self.mutate_instrument, self.mutate_pitch, self.mutate_loudness], p=self.choose_mutation_p)
             # Apply mutation
             mutated_individual = mutation(individual)
             # Set recalc fitness flag
@@ -100,11 +102,11 @@ class Mutator:
         if rnd < increase_probability:
             # Add a sample
             new_sample = self.sample_library.get_random_sample_uniform()
-            individual.samples.append(new_sample)
+            individual.add_sample(new_sample)
         else:
             # Remove a sample
             idx = np.random.choice(pre_mutation_n_samples)
-            individual.samples.pop(idx)
+            individual.remove_sample(idx)
         return individual
 
     def mutate_instrument(self, individual:BaseIndividual) -> BaseIndividual:
@@ -172,9 +174,30 @@ class Mutator:
 
         return individual
     
-    def step_size_control(self, zeta:float):
+    def mutate_loudness(self, individual:BaseIndividual) -> BaseIndividual:
+        """Changes the loudness of one of the samples in the given individual.
+
+        Parameters
+        ----------
+        individual : BaseIndividual
+            Individual that shall be mutated.
+
+        Returns
+        -------
+        BaseIndividual
+            The individual after one of its samples' loudness was changed.
         """
-        Decrease std, mean and upper bound of the number of mutations applied 
+        # Uniformly choose a sample to change the loudness of
+        change_idx = np.random.choice(len(individual.samples))
+
+        # Either halve or double the loudness
+        factor = np.random.choice([0.5, 2])
+        individual.loudnesses[change_idx] *= factor
+
+        return individual
+
+    def step_size_control(self, zeta:float):
+        """Decrease std, mean and upper bound of the number of mutations applied 
         by multiplying each by zeta.
 
         Parameters

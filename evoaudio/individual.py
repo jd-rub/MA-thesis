@@ -10,6 +10,7 @@ INITIAL_N_SAMPLES_P = [0.1, 0.3, 0.3, 0.2, 0.1]
 
 class BaseIndividual:
     samples: list[BaseSample]
+    loudnesses: list[float]
     phi: float
     fitness_per_onset: list[float]
     fitness: float
@@ -18,6 +19,7 @@ class BaseIndividual:
 
     def __init__(self, phi:float=0.1):
         self.samples = [] # List of samples in the collection
+        self.loudnesses = []
         self.phi = phi # Fraction of onsets that form the basis of overall fitness for this individual 
         self.fitness_per_onset = [] # Vector of fitnesses per onset
         self.fitness = np.inf # Mean fitness to top φ% of approximated onsets
@@ -28,12 +30,13 @@ class BaseIndividual:
         s = f"Fitness: {self.fitness} | " + ", ".join(str(x) for x in self.samples)
         return s
 
-    # def calc_abs_stft(self) -> None:
-    #     """Calculates the absolute stft values of the sample mix.
-    #     """
-    #     stft = librosa.stft(self.to_mixdown())
-    #     self.abs_stft = np.abs(stft)
-    #     self.recalc_fitness = True
+    def add_sample(self, sample:BaseSample, loudness:float=1.0):
+        self.samples.append(sample)
+        self.loudnesses.append(loudness)
+
+    def remove_sample(self, sample_idx:int):
+        self.samples.pop(sample_idx)
+        self.loudnesses.pop(sample_idx)
 
     def calc_abs_stft(self) -> None:
         # Version with 1-second snippets (Ginsel et. al 2022)
@@ -64,7 +67,8 @@ class BaseIndividual:
         # Resize by expanding all samples to the same length
         max_length = np.max([len(sample.y) for sample in self.samples])
         ys_equal_length = [np.pad(sample.y, (0, max_length - len(sample.y))) for sample in self.samples]
-        return np.sum(ys_equal_length, axis=0)
+        ys_loudness_adjusted = [y * self.loudnesses[i] for i, y in enumerate(ys_equal_length)]
+        return np.sum(ys_loudness_adjusted, axis=0)
 
     @classmethod
     def from_copy(cls, obj):
@@ -81,7 +85,8 @@ class BaseIndividual:
             Equivalent copy of the Individual that can be modified without modifying the original.
         """
         instance = cls()
-        instance.samples = [copy(sample) for sample in obj.samples] # Copies only the reference to a sample for better performance.
+        for sample in obj.samples:
+            instance.add_sample(copy(sample)) # Copies only the reference to a sample for better performance.
         instance.phi = obj.phi
         instance.fitness_per_onset = [fitness for fitness in obj.fitness_per_onset]
         instance.recalc_fitness = obj.recalc_fitness
@@ -112,5 +117,5 @@ class BaseIndividual:
         """
         individual = cls(phi=phi)
         for _ in range(np.random.choice(list(range(max_samples)), p=sample_num_p) + 1):
-            individual.samples.append(sample_lib.get_random_sample_uniform())
+            individual.add_sample(sample_lib.get_random_sample_uniform())
         return individual

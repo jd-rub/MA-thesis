@@ -82,12 +82,12 @@ def calc_jaccard_for_piece_approximation(experiment_name:str, save_to_csv:bool=F
     j_p = []
     j_ip = []
 
-    experiment_name = 'tiny_aam_5000_005_300_1'
-    popfiles = glob(f'./experiments/{experiment_name}/*.pkl')
+    # experiment_name = 'tiny_aam_5000_005_300_1'
+    popfiles = glob(f'./experiments/{experiment_name}/**/*.pkl')
     run_names = []
 
     for popfile in popfiles:
-        run_name = os.path.basename(popfile).split("_")[0]
+        run_name = os.path.basename(popfile).split("_")[0].replace(".pkl", "")
         run_names.append(run_name)
         pop = Population.from_file(popfile)
         annotations = parse_arff(f'./audio/tiny_aam/annotations/{run_name}_onsets.arff')
@@ -180,3 +180,6 @@ Errors:""")
         writer = DictWriter(f, fieldnames=field_names)
         writer.writerow(row)
         f.close()
+
+if __name__ == "__main__":
+    calc_jaccard_for_piece_approximation("tiny_aam/300_1_3000_0.05_5_10_1_20_0.9954_15_20_1sec_loudness", True)
