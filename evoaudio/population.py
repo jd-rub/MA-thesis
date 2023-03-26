@@ -113,7 +113,8 @@ class Population:
         for individual in self.individuals:
             for i, sample in enumerate(individual.samples):
                 individual.samples[i] = FlatSample(sample.instrument, sample.style, sample.pitch)
-        for individual in self.archive.values():
+        for record in self.archive.values():
+            individual = record.individual
             for i, sample in enumerate(individual.samples):
                 individual.samples[i] = FlatSample(sample.instrument, sample.style, sample.pitch)
 
