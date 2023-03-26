@@ -9,17 +9,15 @@ from .individual import BaseIndividual
 from .base_sample import BaseSample, FlatSample
 
 class Population:
-    individuals: list[BaseIndividual]
     archive: dict[int, ArchiveRecord]
     
     def __init__(self) -> None:
-        self.individuals = [] # List of BaseIndividuals, Sorted by fitness values
         self.archive = {} # Dict of onset: SampleCollection # TODO: Refactor and expand archive to hold records for each instrument
     
     def __str__(self) -> str:
-        return "\n".join([str(individual) for individual in self.individuals])
+        return "\n".join([str(record.individual) for record in self.archive.values()])
 
-    def init_archive(self, onsets:Union[list[int], np.ndarray[int]]) -> None:
+    def init_archive(self, onsets:Union[list[int], np.ndarray[int]], individuals:list[BaseIndividual]) -> None:
         """Initializes the archive of best individuals per onset.
 
         Parameters
@@ -27,15 +25,15 @@ class Population:
         onsets : list[int]
             list of onsets from the target piece
         """
-        for individual in self.individuals:
+        for individual in individuals:
             for i, onset in enumerate(onsets):
                 if individual.fitness_per_onset[i] < self.archive.get(onset, BaseIndividual()).fitness:
                     self.archive[onset] = ArchiveRecord(onset=onset, fitness=individual.fitness_per_onset[i], individual=individual)
 
-    def sort_individuals_by_fitness(self):
-        """Sorts the list of individuals by fitness. Meant to only be done upon initialization. 
-        """
-        self.individuals.sort(key=lambda item: item.fitness)
+    # def sort_individuals_by_fitness(self):
+    #     """Sorts the list of individuals by fitness. Meant to only be done upon initialization. 
+    #     """
+    #     self.individuals.sort(key=lambda item: item.fitness)
 
     def insert_individual(self, individual:BaseIndividual):
         """Inserts an individual into the population. 
@@ -46,24 +44,22 @@ class Population:
         individual : BaseIndividual
             An individual containing one or more samples and calculated fitness value.
         """
-        # Insert individual
-        bisect.insort_left(self.individuals, individual, key=lambda item: item.fitness)
         # Update record of best onset approximations
         for i, onset in enumerate(self.archive):
             if individual.fitness_per_onset[i] < self.archive[onset].fitness:
                 self.archive[onset].individual = individual
                 self.archive[onset].fitness = individual.fitness_per_onset[i]
 
-    def remove_worst(self, n:int):
-        """Removes the worst n individuals from the population.
-        This method assumes that self.individuals is already sorted by fitness.
+    # def remove_worst(self, n:int):
+    #     """Removes the worst n individuals from the population.
+    #     This method assumes that self.individuals is already sorted by fitness.
 
-        Parameters
-        ----------
-        n : int
-            Number of individuals to remove from the population.
-        """
-        self.individuals = self.individuals[:-n]
+    #     Parameters
+    #     ----------
+    #     n : int
+    #         Number of individuals to remove from the population.
+    #     """
+    #     self.individuals = self.individuals[:-n]
 
     def get_best_individual(self) -> BaseIndividual:
         """Returns the individual with highest fitness.
@@ -73,7 +69,9 @@ class Population:
         BaseIndividual
             Individual with the highest fitness
         """
-        return self.individuals[0]
+        records = list(self.archive.values())
+        sorted_records = sorted(records, key=lambda record: record.fitness)
+        return sorted_records[0]
     
     def merge_populations(self, other_pop:Population):
         """Merges this population with another, taking into account mismatches in the approximated onsets.
@@ -103,16 +101,16 @@ class Population:
         # Merge individual list
         for individual in other_pop.individuals:
             individual.recalc_fitness = True
-        self.individuals += other_pop.individuals
+        # self.individuals += other_pop.individuals
 
         return not onset_mismatch
     
     def _flatten(self):
         """Flattens the population to reduce disk space usage.
         """
-        for individual in self.individuals:
-            for i, sample in enumerate(individual.samples):
-                individual.samples[i] = FlatSample(sample.instrument, sample.style, sample.pitch)
+        # for individual in self.individuals:
+        #     for i, sample in enumerate(individual.samples):
+        #         individual.samples[i] = FlatSample(sample.instrument, sample.style, sample.pitch)
         for record in self.archive.values():
             individual = record.individual
             for i, sample in enumerate(individual.samples):
@@ -126,10 +124,11 @@ class Population:
         sample_lib : SampleLibrary
             Initialized sample library from which to load the samples in this population.
         """
-        for individual in self.individuals:
-            for i, sample in enumerate(individual.samples):
-                individual.samples[i] = sample_lib.get_sample(sample.instrument, sample.style, sample.pitch)
-        for individual in self.archive.values():
+        # for individual in self.individuals:
+        #     for i, sample in enumerate(individual.samples):
+        #         individual.samples[i] = sample_lib.get_sample(sample.instrument, sample.style, sample.pitch)
+        for record in self.archive.values():
+            individual = record.individual
             for i, sample in enumerate(individual.samples):
                 individual.samples[i] = sample_lib.get_sample(sample.instrument, sample.style, sample.pitch)
 
@@ -178,3 +177,6 @@ class ArchiveRecord():
         self.onset = onset
         self.fitness = fitness
         self.individual = individual
+    
+    def __str__(self) -> str:
+        return f"{self.onset}: {str(self.individual)} | Fitness: {self.fitness}"

@@ -94,19 +94,20 @@ def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int,
 def _init_population(sample_lib:SampleLibrary, target:Target, onset_frac:float, popsize:int, verbose:bool) -> Population:
     # Create initial population
     population = Population()
-    population.individuals = [BaseIndividual.create_random_individual(sample_lib=sample_lib, phi=onset_frac) for _ in tqdm(range(popsize), desc="Initializing Population", disable=(not verbose))]
-    for individual in tqdm(population.individuals, desc="Calculating initial fitness", disable=(not verbose)):
+    init_individuals = [BaseIndividual.create_random_individual(sample_lib=sample_lib, phi=onset_frac) for _ in tqdm(range(popsize), desc="Initializing Population", disable=(not verbose))]
+    for individual in tqdm(init_individuals, desc="Calculating initial fitness", disable=(not verbose)):
         # Calc initial fitness
         individual.fitness_per_onset = multi_onset_fitness_cached(target, individual)
         individual.calc_phi_fitness()
-    population.init_archive(target.onsets) # Initial record of best approximations of each onset
-    population.sort_individuals_by_fitness() # Sort population for easier management
+    population.init_archive(target.onsets, init_individuals) # Initial record of best approximations of each onset
+    # population.sort_individuals_by_fitness() # Sort population for easier management
     return population
 
 
 def _step(population:Population, target:Target, n_offspring:int, mutator:Mutator=None, zeta:float=None, early_stopping_fitness:float=None, logger:PopulationLogger=None, step:int=None):
     # Create lambda offspring
-    parents = np.random.choice(population.individuals, size=n_offspring)
+    parent_records = np.random.choice(list(population.archive.values()), size=n_offspring)
+    parents = [record.individual for record in parent_records]
     offspring = [mutator.mutate_individual(BaseIndividual.from_copy(individual)) for individual in parents]
 
     # Evaluate fitness of offspring
@@ -115,9 +116,6 @@ def _step(population:Population, target:Target, n_offspring:int, mutator:Mutator
         individual.calc_phi_fitness()
         # Insert individual into population
         population.insert_individual(individual)
-    
-    # Remove lambda worst individuals
-    population.remove_worst(n_offspring)
 
     # Step size adaptation
     if zeta is not None:

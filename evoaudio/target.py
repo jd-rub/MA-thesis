@@ -18,7 +18,7 @@ class Target():
         onset_frames = librosa.onset.onset_detect(y=y, units='frames')
         oenv = librosa.onset.onset_strength(y=y)
         backtracked_onset_frames = librosa.onset.onset_backtrack(onset_frames, oenv)
-        return librosa.frames_to_samples(backtracked_onset_frames, sr=11025)
+        return librosa.frames_to_samples(backtracked_onset_frames)
 
     def calc_stft_for_snippets(self):
         stft_per_snippet = dict()

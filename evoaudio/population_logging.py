@@ -12,7 +12,7 @@ class PopulationLogger:
     
     def log_population(self, pop:Population, step:int) -> None:
         self.logged_steps.append(step)
-        self.mean_fitness.append(np.mean([individual.fitness for individual in pop.individuals]))
+        self.mean_fitness.append(np.mean([record.individual.fitness for record in pop.archive.values()]))
         self.mean_fitness_best_records.append(np.mean([record.fitness for i, record in enumerate(pop.archive.values())]))
         self.elitist_fitness.append(pop.get_best_individual().fitness)
 
