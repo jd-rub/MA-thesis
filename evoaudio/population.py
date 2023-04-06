@@ -129,7 +129,8 @@ class Population:
         for individual in self.individuals:
             for i, sample in enumerate(individual.samples):
                 individual.samples[i] = sample_lib.get_sample(sample.instrument, sample.style, sample.pitch)
-        for individual in self.archive.values():
+        for record in self.archive.values():
+            individual = record.individual
             for i, sample in enumerate(individual.samples):
                 individual.samples[i] = sample_lib.get_sample(sample.instrument, sample.style, sample.pitch)
 
@@ -169,7 +170,7 @@ class Population:
         with open(filename, 'rb') as fp:
             obj = pickle.load(fp)
             if expand and sample_lib is not None:
-                obj.expand(sample_lib)
+                obj._expand(sample_lib)
             
             return obj
 
