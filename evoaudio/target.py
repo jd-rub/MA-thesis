@@ -2,7 +2,7 @@ import librosa
 import numpy as np
 
 class Target():
-    def __init__(self, y, onsets=None) -> None:
+    def __init__(self, y, onsets=None, calc_stft=True) -> None:
         self.y = y
         if onsets is None:
             # self.onsets = librosa.onset.onset_detect(y=y, units="samples")
@@ -10,9 +10,13 @@ class Target():
         else:
             self.onsets = onsets
         # self.stft_per_snippet = self.calc_stft_for_snippets() # Dict with onset: stft pairs
-        self.stft_per_snippet = self.calc_stft_for_snippets_adaptive() # Dict with onset: stft pairs
-        self.abs_stft_per_snippet = {onset: np.abs(self.stft_per_snippet[onset]) for onset in self.onsets}
-    
+        if calc_stft:
+            self.stft_per_snippet = self.calc_stft_for_snippets_adaptive() # Dict with onset: stft pairs
+            self.abs_stft_per_snippet = {onset: np.abs(self.stft_per_snippet[onset]) for onset in self.onsets}
+        else:  
+            self.stft_per_snippet = dict()
+            self.abs_stft_per_snippet = dict()
+
     def detect_onsets(self):
         y = librosa.resample(y=self.y, orig_sr=22050, target_sr=11025)
         onset_frames = librosa.onset.onset_detect(y=y, units='frames')

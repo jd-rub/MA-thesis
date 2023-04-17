@@ -280,3 +280,18 @@ class SampleLibrary:
                 raise ValueError(f"Style '{style}' not valid for instrument {instrument_name}.")
         else:
             raise ValueError(f"Instrument '{instrument_name}' not found in sample library.")
+
+    def get_instrument_info(self, instrument_name):
+        """Getter for instrument info objects associated with the given instrument name.
+
+        Parameters
+        ----------
+        instrument_name : str
+            name of the instrument
+
+        Returns
+        -------
+        InstrumentInfo
+            Data object that holds information about the instrument
+        """
+        return self.instruments[instrument_name]
