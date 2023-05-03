@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Any, Callable, Union
 
 import numpy as np
 from tqdm import tqdm
@@ -29,7 +29,7 @@ def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int,
                       sample_lib:SampleLibrary, popsize:int, n_offspring:int, 
                       onset_frac:float, zeta:float=None, early_stopping_fitness:float=None, 
                       population:Population=None, mutator:Mutator=None, logger:PopulationLogger=None, 
-                      onsets:Union[np.ndarray, list]=None, verbose:bool=True
+                      onsets:Union[np.ndarray, list]=None, verbose:bool=True, callback:Callable[[Population, int], Any]=None
                       ) -> Population:
     """Evolutionary approximation of a polyphonic musical piece.
 
@@ -63,6 +63,8 @@ def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int,
         If not provided, they will be estimated by librosa.onset.onset_detect.
     verbose : bool, optional
         If True, will print a progress bar and additional information to console during each step.
+    callback : Callable, optional
+        Callback function that receives a population and the current step as input.
 
     Returns
     -------
@@ -84,6 +86,8 @@ def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int,
         if verbose:
             # Update progress bar
             pbar.set_postfix_str(f"Best individual: {str(population.get_best_individual())}")
+        if callback is not None:
+            callback(population, step)
         # Early stopping
         if done:
             break
