@@ -36,7 +36,7 @@ def extract_samples(individual:BaseIndividual):
             seen_samples.append((sample.instrument, sample.pitch))
     return seen_samples
 
-def jaccard_error(population:Population, annotations:dict, mode:class_mode):
+def jaccard_error(population:Population, annotations:dict, mode:class_mode) -> float:
     """Iteratively calculates the jaccard error for each onset, then returns the mean.
 
     Parameters
@@ -111,6 +111,59 @@ def calc_jaccard_for_chord_approximation(pop:Population, annotation:list[tuple]
 
     return j_i, j_p, j_ip
 
+def calc_and_save_jaccard(filename, errors, params:dict):
+    # Calculate error statistics
+    j_i = np.mean([tup[0] for tup in errors])
+    j_p = np.mean([tup[1] for tup in errors])
+    j_ip = np.mean([tup[2] for tup in errors])
+
+    j_i_std = np.std([tup[0] for tup in errors])
+    j_p_std = np.std([tup[1] for tup in errors])
+    j_ip_std = np.std([tup[2] for tup in errors])
+
+    j_i_per_run = []
+    j_p_per_run = []
+    j_ip_per_run = []
+    n = 10
+
+    for i in range(0, len(errors), n):
+        j_i_per_run.append(np.mean([tup[0] for tup in errors[i:i+n]]))
+        j_p_per_run.append(np.mean([tup[1] for tup in errors[i:i+n]]))
+        j_ip_per_run.append(np.mean([tup[2] for tup in errors[i:i+n]]))
+
+    j_i_median = np.median(j_i_per_run)
+    j_p_median = np.median(j_p_per_run)
+    j_ip_median = np.median(j_ip_per_run)
+
+    j_i_min = np.min(j_i_per_run)
+    j_p_min = np.min(j_p_per_run)
+    j_ip_min = np.min(j_ip_per_run)
+
+    j_i_max = np.max(j_i_per_run)
+    j_p_max = np.max(j_p_per_run)
+    j_ip_max = np.max(j_ip_per_run)
+
+    # Save to .csv
+    field_names = list(params.keys()) + [ "j_i", "j_i_std", "j_i_median", "j_i_min", "j_i_max", 
+                    "j_p", "j_p_std", "j_p_median", "j_p_min", "j_p_max", 
+                    "j_ip", "j_ip_std", "j_ip_median", "j_ip_min", "j_ip_max"]
+
+    row = params | {
+        "j_i": j_i, "j_i_std": j_i_std, "j_i_median": j_i_median, "j_i_min": j_i_min, "j_i_max": j_i_max,
+        "j_p": j_p, "j_p_std": j_p_std, "j_p_median": j_p_median, "j_p_min": j_p_min, "j_p_max": j_p_max,
+        "j_ip": j_ip, "j_ip_std": j_ip_std, "j_ip_median": j_ip_median, "j_ip_min": j_ip_min, "j_ip_max": j_ip_max}
+
+    print("Chord approximation results for parameters:")
+    print(f"""{params}
+------------------
+Errors:""")
+    print(f"Mean: j_i={j_i}, j_p={j_p}, j_ip={j_ip}")
+    print(f"Std: j_i={j_i_std}, j_p={j_p_std}, j_ip={j_ip_std}")
+
+    with open(filename, 'a') as f:
+        writer = DictWriter(f, fieldnames=field_names)
+        writer.writerow(row)
+        f.close()
 
 def jaccard_results_to_csv(filename, errors, popsize, n_offspring, max_steps, 
     alpha, beta, l_bound, u_bound,
