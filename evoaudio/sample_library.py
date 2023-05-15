@@ -1,5 +1,5 @@
 from glob import glob
-from typing import Union
+from typing import Union, Tuple
 
 import librosa
 import numpy as np
@@ -164,7 +164,7 @@ class SampleLibrary:
         pitch = np.random.choice(list(instrument.pitches[style]))
         return self.get_sample(instrument.name, style, pitch)
 
-    def get_random_instrument_for_pitch(self, pitch:Union[Pitch, DrumHit]) -> str:
+    def get_random_instrument_for_pitch(self, pitch:Union[Pitch, DrumHit]) -> Tuple[str, str]:
         """Helper function to draw a random instrument that is valid for the provided pitch.
 
         Parameters
@@ -174,8 +174,8 @@ class SampleLibrary:
 
         Returns
         -------
-        str
-            Name of the drawn instrument.
+        Tuple[str, str]
+            Name of the drawn instrument and style.
         """
         idx = np.random.choice(len(self.known_instruments_by_pitch[pitch]))
         return list(self.known_instruments_by_pitch[pitch])[idx]
