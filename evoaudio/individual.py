@@ -90,7 +90,10 @@ class BaseIndividual:
         return instance
 
     @classmethod
-    def create_random_individual(cls, sample_lib:SampleLibrary, max_samples:int=5, sample_num_p:list[float]=INITIAL_N_SAMPLES_P, phi:float=0.1):
+    def create_random_individual(cls, 
+                                 sample_lib:SampleLibrary, max_samples:int=5, 
+                                 sample_num_p:list[float]=INITIAL_N_SAMPLES_P, 
+                                 phi:float=0.1, pitch_weights:list[float]=None):
         """Creates an individual from a sample library and given parameters.
 
         Parameters
@@ -112,5 +115,8 @@ class BaseIndividual:
         """
         individual = cls(phi=phi)
         for _ in range(np.random.choice(list(range(max_samples)), p=sample_num_p) + 1):
-            individual.samples.append(sample_lib.get_random_sample_uniform())
+            if pitch_weights is None:
+                individual.samples.append(sample_lib.get_random_sample_uniform())
+            else:
+                individual.samples.append(sample_lib.get_random_sample_weighted(pitch_weights=pitch_weights))
         return individual

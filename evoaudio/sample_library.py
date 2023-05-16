@@ -164,6 +164,25 @@ class SampleLibrary:
         pitch = np.random.choice(list(instrument.pitches[style]))
         return self.get_sample(instrument.name, style, pitch)
 
+    def get_random_sample_weighted(self, pitch_weights:list[float]):
+        """Gets a pitch-weighted random sample from the library.
+        Note: This function first draws a pitch and then uniformly
+        chooses a valid instrument-style combination.
+
+        Parameters
+        ----------
+        pitch_weights : list[float]
+            A list containing the weights per pitch in the Pitch enum.
+
+        Returns
+        -------
+        BaseSample
+            Drawn random sample from the library.
+        """
+        pitch = np.random.choice(a=Pitch.list(), p=pitch_weights)
+        instrument, style = self.get_random_instrument_for_pitch(pitch=pitch)
+        return self.get_sample(instrument=instrument, style=style, pitch=pitch)
+
     def get_random_instrument_for_pitch(self, pitch:Union[Pitch, DrumHit]) -> Tuple[str, str]:
         """Helper function to draw a random instrument that is valid for the provided pitch.
 

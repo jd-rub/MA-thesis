@@ -58,7 +58,7 @@ def create_sample_set(sample_lib:SampleLibrary):
                 new_pitch = sample.pitch - 12
                 instrument, style = sample_lib.get_random_instrument_for_pitch(new_pitch)
                 individual.samples[i] = sample_lib.get_sample(instrument=instrument, style=style, pitch=new_pitch)
-    annotations = [[(sample.instrument, sample.pitch) for sample in ind.samples] for ind in individuals]
+    annotations = [[(sample.instrument, str(sample.pitch.value)) for sample in ind.samples] for ind in individuals]
     return individuals, annotations
 
 def run_experiment(annotations:list[tuple[str, str]], target_individuals:list[BaseIndividual], sample_lib:SampleLibrary, pitch_offset:int, errors:list, fitnesses:list, proc_id:int):
@@ -121,7 +121,7 @@ if __name__ == "__main__":
                     "ZETA": ZETA, "PITCH_SHIFT_STD": PITCH_SHIFT_STD, "N_RUNS": N_RUNS, 
                     "PITCH_OFFSET": pitch_offset
                 })
-                with open(f"./experiments/fixed_shifted_pitch_2000gen/{pitch_offset}_errors.pkl", "wb") as fp:
+                with open(f"./experiments/fixed_shifted_pitch_2000gen/{pitch_offset}_preprocess_errors.pkl", "wb") as fp:
                     pickle.dump(list(errors), fp)
-                with open(f"./experiments/fixed_shifted_pitch_2000gen/{pitch_offset}_fitnesses.pkl", "wb") as fp:
+                with open(f"./experiments/fixed_shifted_pitch_2000gen/{pitch_offset}_preprocess_fitnesses.pkl", "wb") as fp:
                     pickle.dump(list(fitnesses), fp)

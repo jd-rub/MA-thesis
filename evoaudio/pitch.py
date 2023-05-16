@@ -1,6 +1,11 @@
 from enum import IntEnum
 
-class Pitch(IntEnum):
+class ListableIntEnum(IntEnum):
+    @classmethod
+    def list(cls):
+        return list(map(lambda c: c.value, cls))
+
+class Pitch(ListableIntEnum):
     gis0 = 20
     a0 = 21
     ais0 = 22
@@ -91,7 +96,7 @@ class Pitch(IntEnum):
     b7 = 107
     c8 = 108
 
-class DrumHit(IntEnum):
+class DrumHit(ListableIntEnum):
     Kick1 = 36
     Snare_Sidestick = 37
     Snare_Center = 38

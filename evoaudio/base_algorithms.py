@@ -7,6 +7,7 @@ from .sample_library import SampleLibrary
 from .individual import BaseIndividual
 from .mutations import Mutator
 from .fitness import multi_onset_fitness_cached
+from .pitch_detection import extract_pitch_probabilities
 from .population import Population
 from .population_logging import PopulationLogger
 from .target import Target
@@ -98,7 +99,22 @@ def approximate_piece(target_y:Union[np.ndarray, list], max_steps:int,
 def _init_population(sample_lib:SampleLibrary, target:Target, onset_frac:float, popsize:int, verbose:bool) -> Population:
     # Create initial population
     population = Population()
-    population.individuals = [BaseIndividual.create_random_individual(sample_lib=sample_lib, phi=onset_frac) for _ in tqdm(range(popsize), desc="Initializing Population", disable=(not verbose))]
+    # Choose popsize-many onsets-windows from which to draw initial pitches
+    chosen_onsets_idx = np.random.choice(len(target.onsets), size=popsize, replace=True)
+    # Calculate pitch probabilities for every window
+    pitch_probabilities = []
+    for idx in chosen_onsets_idx:
+        start = target.onsets[idx]
+        if idx < len(target.onsets) - 1:
+            end = target.onsets[idx+1]
+        else:
+            end = len(target.y)
+        pitch_probabilities.append(extract_pitch_probabilities(y=target.y[start:end]))
+
+    population.individuals = [BaseIndividual.create_random_individual(
+        sample_lib=sample_lib, phi=onset_frac, pitch_weights=pitch_probabilities[i]) 
+        for i in tqdm(range(popsize), desc="Initializing Population", disable=(not verbose))]
+    
     for individual in tqdm(population.individuals, desc="Calculating initial fitness", disable=(not verbose)):
         # Calc initial fitness
         individual.fitness_per_onset = multi_onset_fitness_cached(target, individual)
