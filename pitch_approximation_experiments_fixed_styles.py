@@ -11,7 +11,7 @@ from evoaudio.mutations import Mutator
 from evoaudio.pitch import Pitch
 from evoaudio.individual import BaseIndividual
 from evoaudio.fitness import fitness
-from jaccard import calc_jaccard_for_chord_approximation, jaccard_results_to_csv
+from evoaudio.jaccard import calc_jaccard_for_chord_approximation, jaccard_results_to_csv
 
 RESULT_CSV = "./experiments/pitch_approximation_results_fixed_styles.csv"
 

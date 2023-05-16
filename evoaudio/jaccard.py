@@ -64,7 +64,7 @@ def jaccard_error(population:Population, annotations:dict, mode:class_mode) -> f
                 annotated_features = [annotation[0] for annotation in annotations[time_onset]]
             case class_mode.PITCHES:
                 extracted_features = extract_pitches(individual)
-                annotated_features = [annotation[1] for annotation in annotations[time_onset]]
+                annotated_features = [int(annotation[1].replace("+", "")) for annotation in annotations[time_onset]]
             case class_mode.COMBINED:
                 extracted_features = extract_samples(individual)
                 annotated_features = annotations[time_onset]

@@ -15,7 +15,7 @@ from evoaudio.mutations import Mutator
 from evoaudio.population import Population, ArchiveRecord
 from evoaudio.sample_library import SampleLibrary
 from evoaudio.target import Target
-from jaccard import calc_and_save_jaccard, calc_jaccard_for_chord_approximation
+from evoaudio.jaccard import calc_and_save_jaccard, calc_jaccard_for_chord_approximation
 
 RESULT_CSV = "./experiments/fixed_shifted_pitch.csv"
 
