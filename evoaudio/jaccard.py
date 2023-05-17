@@ -33,7 +33,7 @@ def extract_samples(individual:BaseIndividual):
     seen_samples = []
     for sample in individual.samples:
         if (sample.instrument, sample.pitch) not in seen_samples:
-            seen_samples.append((sample.instrument, sample.pitch))
+            seen_samples.append((sample.instrument, str(sample.pitch.value)))
     return seen_samples
 
 def jaccard_error(population:Population, annotations:dict, mode:class_mode) -> float:
