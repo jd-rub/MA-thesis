@@ -49,7 +49,8 @@ def create_sample_set(sample_lib):
     for i, target in enumerate(target_individuals):
         target.samples = samples[i]
     target_mixes = [individual.to_mixdown() for individual in target_individuals]
-    return target_chords, target_mixes, target_individuals
+    annotations = [[(tup[0], str(tup[1].value)) for tup in annotation] for annotation in target_chords]
+    return annotations, target_mixes, target_individuals
 
 def get_valid_sample(sample_lib, instrument, pitch):
     # Retrying until valid style is found for pitch
