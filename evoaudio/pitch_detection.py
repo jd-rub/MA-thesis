@@ -1,7 +1,7 @@
 import librosa
 import numpy as np
 
-def extract_pitch_probabilities(y, sr=22050, n_bins=89, bins_per_octave=12, fmin=librosa.note_to_hz("f0")):
+def extract_pitch_probabilities(y, sr=22050, n_bins=89, bins_per_octave=12, fmin=librosa.note_to_hz("g#0"), k_pitches=5):
     """Estimates the pitches in the given signal y and turns
     these estimations into a probability distribution.
 
@@ -29,5 +29,11 @@ def extract_pitch_probabilities(y, sr=22050, n_bins=89, bins_per_octave=12, fmin
     abs_cqt = np.abs(cqt)
     clipped_cqt = np.clip(abs_cqt, a_min=0, a_max=None)
     cqt_sum = np.sum(clipped_cqt, axis=1)
+    part_idx = np.argpartition(cqt_sum, kth=-k_pitches)[-k_pitches]
+    part_val = cqt_sum[part_idx]
+    cqt_sum[cqt_sum < (part_val - 0.0001)] = 0
     sum_norm = cqt_sum / np.sum(cqt_sum)
-    return np.nan_to_num(sum_norm)
+    if np.isnan(sum_norm).any() or not np.isclose(np.sum(sum_norm), 1):
+        return [1/len(sum_norm) for _ in range(len(sum_norm))]
+    else:
+        return sum_norm
