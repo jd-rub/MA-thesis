@@ -151,7 +151,7 @@ class Population:
             pickle.dump(self, fp)
         
     @classmethod 
-    def from_file(cls, filename:str, expand:bool=True, sample_lib=None):
+    def from_file(cls, filename:str, expand:bool=True, sample_lib=None) -> Population:
         """Loads a population from a pickled file.
 
         Parameters

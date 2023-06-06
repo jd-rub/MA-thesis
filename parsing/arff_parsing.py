@@ -48,8 +48,6 @@ def parse_arff(filename):
             if attribute == 'Onset time in seconds' or type(attribute) is not str:
                 continue
             if row[i-1]:
-                if onset == 119.02157:
-                    print("AHA!")
                 data = row[i-1]
                 instrument = aarf_attribute_to_instrument_name[attribute]
 
