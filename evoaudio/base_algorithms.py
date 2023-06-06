@@ -1,5 +1,6 @@
 from typing import Any, Callable, Union
 
+import librosa
 import numpy as np
 from tqdm import tqdm
 
@@ -103,13 +104,14 @@ def _init_population(sample_lib:SampleLibrary, target:Target, onset_frac:float, 
     chosen_onsets_idx = np.random.choice(len(target.onsets), size=popsize, replace=True)
     # Calculate pitch probabilities for every window
     pitch_probabilities = []
+    y_harm = librosa.effects.harmonic(target.y)
     for idx in chosen_onsets_idx:
         start = target.onsets[idx]
         if idx < len(target.onsets) - 1:
             end = target.onsets[idx+1]
         else:
             end = len(target.y)
-        pitch_probabilities.append(extract_pitch_probabilities(y=target.y[start:end]))
+        pitch_probabilities.append(extract_pitch_probabilities(y=y_harm[start:end]))
 
     population.individuals = [BaseIndividual.create_random_individual(
         sample_lib=sample_lib, phi=onset_frac, pitch_weights=pitch_probabilities[i]) 
