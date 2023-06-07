@@ -179,7 +179,7 @@ class SampleLibrary:
         BaseSample
             Drawn random sample from the library.
         """
-        pitch = np.random.choice(a=Pitch.list(), p=pitch_weights)
+        pitch = np.random.choice(a=Pitch.list()[1:], p=pitch_weights)
         instrument, style = self.get_random_instrument_for_pitch(pitch=pitch)
         return self.get_sample(instrument=instrument, style=style, pitch=pitch)
 
