@@ -20,7 +20,7 @@ from evoaudio.jaccard import calc_and_save_jaccard, calc_jaccard_for_chord_appro
 RESULT_CSV = "./experiments/fixed_shifted_pitch.csv"
 
 N_RUNS = 1000
-MAX_STEPS = 2000
+MAX_STEPS = 10000
 POPSIZE = 10
 N_OFFSPRING = 1
 ALPHA = 5
@@ -58,7 +58,7 @@ def create_sample_set(sample_lib:SampleLibrary):
                 new_pitch = sample.pitch - 12
                 instrument, style = sample_lib.get_random_instrument_for_pitch(new_pitch)
                 individual.samples[i] = sample_lib.get_sample(instrument=instrument, style=style, pitch=new_pitch)
-    annotations = [[(sample.instrument, sample.pitch) for sample in ind.samples] for ind in individuals]
+    annotations = [[(sample.instrument, str(int(sample.pitch))) for sample in ind.samples] for ind in individuals]
     return individuals, annotations
 
 def run_experiment(annotations:list[tuple[str, str]], target_individuals:list[BaseIndividual], sample_lib:SampleLibrary, pitch_offset:int, errors:list, fitnesses:list, proc_id:int):
@@ -100,7 +100,7 @@ if __name__ == "__main__":
             shared_lib = manager.SampleLibrary()
             # Create sample set
             true_individuals, annotations = create_sample_set(shared_lib)
-            for pitch_offset in range(1):
+            for pitch_offset in range(13):
                 manager_2 = Manager()
                 errors = manager_2.list()
                 fitnesses = manager_2.list()

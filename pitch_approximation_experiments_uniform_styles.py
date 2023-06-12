@@ -13,7 +13,7 @@ from evoaudio.individual import BaseIndividual
 from evoaudio.fitness import fitness
 from evoaudio.jaccard import calc_jaccard_for_chord_approximation
 
-RESULT_CSV = "./experiments/chord_approximation_results.csv"
+RESULT_CSV = "./experiments/pitch_approximation_results_uniform_styles.csv"
 
 POPSIZE = 10
 N_OFFSPRING = 1
@@ -22,9 +22,9 @@ ALPHA = 5
 BETA = 10
 L_BOUND = 1
 U_BOUND = 10
-ZETA = 1
+ZETA = 0.9954
 PITCH_SHIFT_STD = 15
-N_RUNS = 20
+N_RUNS = 100
 MAX_PROCESSES = 10
 
 class LibraryManager(BaseManager):
@@ -59,6 +59,7 @@ def get_valid_sample(sample_lib, instrument):
 
 def run_experiment(target_chords, target_mixes, sample_lib, errors, proc_id):
     results = []
+    annotations = [[(tup[0], str(int(tup[1]))) for tup in chord] for chord in target_chords]
     # Initialize populations with a-priori knowledge
     populations = [Population() for _ in range(len(target_chords))]
     for i, pop in enumerate(populations):
@@ -76,7 +77,7 @@ def run_experiment(target_chords, target_mixes, sample_lib, errors, proc_id):
         result = approximate_piece(target_y=target_mixes[i], max_steps=MAX_STEPS, sample_lib=sample_lib, popsize=POPSIZE, n_offspring=N_OFFSPRING, onset_frac=1, zeta=ZETA, early_stopping_fitness=0.0001, population=pop, mutator=mutator, onsets=[0], verbose=proc_id==0)
         result.archive[0] = ArchiveRecord(0, result.get_best_individual().fitness, result.get_best_individual())
         results.append(result)
-        errors.append(calc_jaccard_for_chord_approximation(result, target_chords[i]))
+        errors.append(calc_jaccard_for_chord_approximation(result, annotations[i]))
 
 def result_to_csv(j_i, j_i_std, j_p, j_p_std, j_ip, j_ip_std):
     field_names = ["POPSIZE", "N_OFFSPRING", "MAX_STEPS", "ALPHA", "BETA",
