@@ -53,8 +53,8 @@ class SampleLibrary:
 
         # Get instrument name, style and note from file path
         instrument_name, tail = path.split(
-            "StructuredSamples\\")[1].split("\\", maxsplit=1)
-        style, tail = tail.split("\\")[-2:]
+            "StructuredSamples/")[1].split("/", maxsplit=1)
+        style, tail = tail.split("/")[-2:]
         pitch_str = tail.split("_")[-1].split(".")[0].lower()
 
         # Separate drum handling
