@@ -4,3 +4,4 @@ experiments
 *.wav
 *.pkl
 *.pdf
+.DS_Store
