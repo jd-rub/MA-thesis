@@ -1,8 +1,8 @@
 # Experiment Reproduction
-Download additional supplemental material from here: https://drive.google.com/drive/folders/1URvtT1r0kJlxDSG6PGnaWhvVuTzhyysX?usp=drive_link
-Unzip and place the `audio` and `experiments` folders in the root directory.
-Install dependencies from `requirements.txt` as venv or with the python environment manager of your choosing.
-Run the scripts in the root directory to repeat our experiments, modify experiment parameters at the top of the files as you see fit.
+Download additional supplemental material from here: https://drive.google.com/drive/folders/1URvtT1r0kJlxDSG6PGnaWhvVuTzhyysX?usp=drive_link  
+Unzip and place the `audio` and `experiments` folders in the root directory.  
+Install dependencies from `requirements.txt` as venv or with the python environment manager of your choosing.  
+Run the scripts in the root directory to repeat our experiments, modify experiment parameters at the top of the files as you see fit.  
 
 # Parameter Overview
 
