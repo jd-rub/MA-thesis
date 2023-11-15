@@ -1,3 +1,8 @@
+# Experiment Reproduction
+Place the `audio` and `experiments` folders in the root directory.
+Install dependencies from `requirements.txt` as venv or with the python environment manager of your choosing.
+Run the scripts in the root directory to repeat our experiment, modify experiment parameters at the top of the files as you see fit.
+
 # Parameter Overview
 
 ## Population Parameters
